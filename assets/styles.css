@@ -1,0 +1,155 @@
+/* ============================================================
+   Ministry of Justice — Traffic Reports Dashboard
+   RTL / Hebrew / High-end visual system
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&display=swap');
+
+/* ------- Core RTL + typography ------- */
+html, body, [class*="st-"], .stMarkdown, .stMetric, .stRadio label,
+[data-testid="stWidgetLabel"], [data-testid="stMarkdownContainer"] {
+    font-family: 'Assistant', sans-serif !important;
+    direction: rtl;
+    text-align: right;
+}
+
+.stApp {
+    background: linear-gradient(135deg, #f5f8fc 0%, #ffffff 50%, #f0f5fb 100%) !important;
+}
+
+/* Center the main area, give it some breathing room */
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 1400px;
+}
+
+/* ------- Hero / title ------- */
+.dashboard-hero {
+    background: linear-gradient(135deg, #003366 0%, #0066cc 100%);
+    color: rgb(0, 0, 0);
+    padding: 32px 28px;
+    border-radius: 16px;
+    margin-bottom: 22px;
+    box-shadow: 0 10px 30px rgba(0,51,102,0.18);
+}
+.dashboard-hero h1 {
+    margin: 0 0 6px 0;
+    font-weight: 800;
+    font-size: 30px;
+    color: rgb(0, 0, 0);
+}
+.dashboard-hero p {
+    margin: 0;
+    opacity: 0.92;
+    font-size: 16px;
+    color: #e7eef7;
+}
+
+/* ------- Page header (per-page) ------- */
+.page-header {
+    background: linear-gradient(135deg, #003366 0%, #0066cc 100%);
+    color: rgb(0, 0, 0);
+    padding: 32px 28px;
+    border-radius: 16px;
+    margin-bottom: 22px;
+    box-shadow: 0 10px 30px rgba(0,51,102,0.18);
+}
+.page-header h1 {
+    color: black; margin: 0 0 6px 0; font-size: 30px; font-weight: 800;
+}
+.page-header p {
+    color: #e7eef7; margin: 0; font-size: 16px;
+}
+
+/* ------- KPI cards ------- */
+.kpi-card {
+    background: #ffffff;
+    padding: 22px 20px;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    border-right: 5px solid #0066cc;
+    text-align: right;
+    margin-bottom: 8px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0,51,102,0.12);
+}
+.kpi-title {
+    font-size: 13px; color: #6b7a92; font-weight: 600; letter-spacing: 0.2px;
+    text-transform: none;
+}
+.kpi-value {
+    font-size: 32px; color: #003366; font-weight: 800; margin-top: 6px; line-height: 1.1;
+}
+.kpi-std {
+    font-size: 12px; color: #0066cc; margin-top: 6px; font-weight: 600;
+    background: rgba(0,102,204,0.08); padding: 4px 8px; border-radius: 4px; display: inline-block;
+}
+.kpi-sub {
+    font-size: 12px; color: #8a9bb8; margin-top: 4px;
+}
+
+/* ------- Insight boxes ------- */
+.insight-box {
+    background: linear-gradient(135deg, #eef5ff 0%, #f7fbff 100%);
+    border-right: 6px solid #0066cc;
+    padding: 18px 22px;
+    border-radius: 12px;
+    margin: 20px 0;
+    box-shadow: 0 2px 10px rgba(0,102,204,0.06);
+}
+.insight-box h4 {
+    color: #003366; margin: 0 0 10px 0; font-weight: 700; font-size: 18px;
+}
+.insight-box p {
+    color: #2c3e50; margin: 0 0 8px 0; font-size: 15px; line-height: 1.75;
+}
+.insight-box .live-stat {
+    color: #0066cc; font-weight: 600; margin-top: 12px;
+    background: rgba(0,102,204,0.06); padding: 10px 14px; border-radius: 8px;
+    border-right: 3px solid #0066cc;
+    font-size: 14px;
+}
+
+/* ------- Section headers ------- */
+.section-header {
+    color: #003366; font-size: 22px; font-weight: 700; margin: 30px 0 12px 0;
+    padding-bottom: 8px; border-bottom: 2px solid #e0e9f5;
+}
+
+/* ------- Muted notes (sample-size caveats) ------- */
+.muted-note {
+    color: #8a7a3a; background: #fff8dc; padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; border-right: 3px solid #ffcc00; margin: 8px 0;
+}
+
+/* ------- Tabs ------- */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 6px;
+    background: transparent;
+    direction: rtl;
+}
+.stTabs [data-baseweb="tab"] {
+    background: #ffffff;
+    border-radius: 10px 10px 0 0;
+    padding: 10px 18px !important;
+    font-weight: 600;
+    color: #5b6b80;
+    border: 1px solid #e0e9f5;
+    border-bottom: none;
+}
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, #0066cc 0%, #003366 100%) !important;
+    color: #ffffff !important;
+    border-color: #0066cc !important;
+}
+
+/* ------- Plotly inside Streamlit: make sure RTL doesn't flip axes ------- */
+.js-plotly-plot, .plotly {
+    direction: ltr;
+}
+
+/* ------- Misc spacing ------- */
+hr { border-color: #e0e9f5; }
