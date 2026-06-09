@@ -97,7 +97,7 @@ st.plotly_chart(
             ("future_caution_num", "עידוד לנהיגה זהירה בעתיד"),
         ],
         height=280,
-    ),
+   ),
     use_container_width=True,
 )
 
@@ -105,7 +105,7 @@ c1, c2 = st.columns(2)
 with c1:
     work = df.copy()
     work["likert_band"] = likert_to_3band(work["process_satisfaction"])
-    work["group"] = work["trial_label"] + " — " + work["migzar"].fillna("לא ידוע")
+    work["group"] = work["trial_label"] + " <br> " + work["migzar"].fillna("לא ידוע")
     st.plotly_chart(
         stacked_pct_bar(
             work.dropna(subset=["likert_band", "group"]),
@@ -116,11 +116,10 @@ with c1:
         ),
         use_container_width=True,
     )
-
 with c2:
     work = df.copy()
     work["likert_band"] = likert_to_3band(work["future_caution"])
-    work["group"] = work["trial_label"] + " — " + work["migzar"].fillna("לא ידוע")
+    work["group"] = work["trial_label"] + " <br> " + work["migzar"].fillna("לא ידוע")
     st.plotly_chart(
         stacked_pct_bar(
             work.dropna(subset=["likert_band", "group"]),
@@ -148,22 +147,22 @@ if len(rec):
     for trial_label in ["ביקשו להישפט", "שילמו קנס / אחר"]:
         sub = df[df["trial_label"] == trial_label]
         if len(sub):
-            counts = sub["friend_recommendation"].value_counts(normalize=True) * 100
+            counts = sub["friend_recommendation"].value_counts  (normalize=True) * 100
             for cat, pct in counts.items():
                 if cat in ["אחר, פרט:", "לא יודע"]:
                     continue
-                rows.append({"מסלול": trial_label, "המלצה": cat, "אחוז": pct})
+                rows.append({"מסלול": trial_label, "": cat, "אחוז": pct})
 
     rec_df = pd.DataFrame(rows)
     if len(rec_df):
         order = (
-            rec_df.groupby("המלצה")["אחוז"].mean().sort_values(ascending=True).index.tolist()
+            rec_df.groupby("")["אחוז"].mean().sort_values(ascending=True).index.tolist()
         )
         fig = px.bar(
-            rec_df, y="המלצה", x="אחוז", color="מסלול", barmode="group",
+            rec_df, y="", x="אחוז", color="מסלול", barmode="group",
             orientation="h",
             color_discrete_map={"ביקשו להישפט": PALETTE["secondary"], "שילמו קנס / אחר": PALETTE["accent"]},
-            category_orders={"המלצה": order},
+            category_orders={"": order},
             text=rec_df["אחוז"].round(1),
         )
         fig.update_traces(texttemplate="%{text}%", textposition="inside",
@@ -171,14 +170,36 @@ if len(rec):
                           constraintext="inside", cliponaxis=False)
         for tr in fig.data:
             tr.textfont = dict(color=_text_on(tr.marker.color))
-        fig.update_layout(template="plotly_white", height=460,
-                          paper_bgcolor="white", plot_bgcolor="white",
-                          font=dict(color="black"),
-                          title="מה היו ממליצים לחבר — לפי מסלול")
-        fig.update_xaxes(ticksuffix="%", title="")
-        fig.update_yaxes(title="")
+        fig.update_layout(
+            template="plotly_white", height=460,
+            paper_bgcolor="white", plot_bgcolor="white",
+            font=dict(color="black"),
+            margin=dict(l=135, r=40, t=90, b=80),
+            autosize=False,
+            title=dict(
+                text="מה היו ממליצים לחבר — לפי מסלול",
+                font=dict(color="black"),
+            ),
+            xaxis=dict(
+                tickfont=dict(color="black"),
+                title_font=dict(color="black"),
+                automargin=True,
+                ticksuffix="%",
+            ),
+            yaxis=dict(
+                tickfont=dict(color="black"),
+                title_font=dict(color="black"),
+                automargin=True,
+                showgrid=True,
+                gridcolor="black",
+                gridwidth=1
+            ),
+            legend=dict(
+                font=dict(color="black"),
+                title=dict(font=dict(color="black")),
+            ),
+        )
         st.plotly_chart(fig, use_container_width=True)
-
     # By sector
     rows2 = []
     for trial_label in ["ביקשו להישפט", "שילמו קנס / אחר"]:
@@ -203,8 +224,17 @@ if len(rec):
                             constraintext="inside", cliponaxis=False,
                             textfont=dict(color="white", size=11))
         fig2.update_layout(template="plotly_white", height=480,
-                            title="המלצות לחבר — לפי מסלול × מגזר")
-        fig2.update_yaxes(ticksuffix="%", title="")
+                            paper_bgcolor="white", plot_bgcolor="white",
+                            font=dict(color="black"),
+                            margin=dict(l=135, r=40, t=90, b=80),
+                            autosize=False,
+                            title=dict(text="המלצות לחבר — לפי מסלול × מגזר",
+                                       font=dict(color="black")),
+                            legend=dict(font=dict(color="black")),
+                            xaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True),
+                            yaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True))
+        fig2.update_yaxes(ticksuffix="%", title="", automargin=True)
+        fig2.update_xaxes(automargin=True)
         st.plotly_chart(fig2, use_container_width=True)
 else:
     st.plotly_chart(empty_state(), use_container_width=True)
@@ -237,7 +267,8 @@ if "mahoz_short" in df.columns and df["mahoz_short"].notna().any():
                 ("process_satisfaction_num", "שביעות רצון"),
                 ("future_caution_num", "עידוד לזהירות"),
             ],
-            title="השוואת שביעות רצון ועידוד לזהירות לפי מחוזות (ממוצע ± סטיית תקן)",
+            title="השוואת שביעות רצון ועידוד לזהירות לפי מחוזות (ממוצע ± סטיית תקן)"
+            
         ),
         use_container_width=True,
     )

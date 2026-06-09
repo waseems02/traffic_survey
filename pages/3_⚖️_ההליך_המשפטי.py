@@ -180,9 +180,12 @@ with c3:
                 template="plotly_white",
                 paper_bgcolor="white", plot_bgcolor="white",
                 font=dict(color="black"),
+                margin=dict(l=135, r=40, t=90, b=80),
+                autosize=False,
                 title="קושי בקבלת הראיות", height=400,
             )
-            fig.update_yaxes(title="כמות משיבים")
+            fig.update_yaxes(title="כמות משיבים", automargin=True)
+            fig.update_xaxes(automargin=True)
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.plotly_chart(empty_state(), use_container_width=True)
@@ -300,8 +303,12 @@ with c2:
             template="plotly_white",
             paper_bgcolor="white", plot_bgcolor="white",
             font=dict(color="black"),
+            margin=dict(l=135, r=40, t=90, b=80),
+            autosize=False,
             title="איזון מול התביעה/המשטרה", height=400,
         )
+        fig.update_xaxes(automargin=True)
+        fig.update_yaxes(automargin=True)
         st.plotly_chart(fig, use_container_width=True)
 
 render_insight("judge_perception", df)
@@ -343,6 +350,7 @@ for c in df.columns:
 if change_col:
     free = df[change_col].dropna().astype(str)
     free = free[free.str.len() > 1]
+    no_answer_count = int(len(df) - len(free))
     if len(free):
         st.markdown(f"**{len(free)} תגובות חופשיות נאספו.** ענן המילים והנושאים המרכזיים מבוססים על תשובות חופשיות של המשיבים.")
         themes_keywords = {
@@ -377,9 +385,32 @@ if change_col:
         ))
         fig.update_layout(
             template="plotly_white",
-            title=f"נושאים מרכזיים בהמלצות לשינוי (n={len(free)})",
+            paper_bgcolor="white", plot_bgcolor="white",
+            font=dict(color="black"),
+            margin=dict(l=135, r=40, t=90, b=80),
+            autosize=False,
+            title=dict(
+                text=f"נושאים מרכזיים בהמלצות לשינוי (n={len(free)})",
+                font=dict(color="black")
+            ),
             height=420,
-        )
+            xaxis=dict(
+                tickfont=dict(color="black"),
+                title_font=dict(color="black"),
+                automargin=True,
+        ),
+            yaxis=dict(
+                tickfont=dict(color="black"),
+                title_font=dict(color="black"),
+                automargin=True,
+        ),
+            legend=dict(
+                font=dict(color="black")
+        ),
+            )
         st.plotly_chart(fig, use_container_width=True)
+        st.markdown(
+            f"<p style='color:black;'>📝 <b>{no_answer_count} אנשים לא ענו</b> — לכן הסטטיסטיקה אינה מבוססת על 100% מהמשיבים.</p>",
+            unsafe_allow_html=True)
 
 render_insight("what_to_change", df)

@@ -99,14 +99,16 @@ with c1:
     fig.update_layout(showlegend=False, height=380, template="plotly_white",
                       paper_bgcolor="white", plot_bgcolor="white",
                       font=dict(color="black"),
-                      title="התפלגות כמות דוחות שהתקבלה")
+                      margin=dict(l=135, r=40, t=90, b=80),
+                      autosize=False,
+                      title="התפלגות כמות דוחות שהתקבלה",title_font_color="black")
     fig.update_traces(textposition="inside", insidetextanchor="middle",
                       constraintext="inside", cliponaxis=False)
     # px.bar maps category→color; pick contrast color per trace from its marker.
     for tr in fig.data:
         tr.textfont = dict(color=_text_on(tr.marker.color))
-    fig.update_yaxes(title="אחוז", ticksuffix="%")
-    fig.update_xaxes(title="")
+    fig.update_yaxes(title="pct", ticksuffix="%", automargin=True,tickfont=dict(color="black"))
+    fig.update_xaxes(title="", automargin=True,tickfont=dict(color="black"))
     st.plotly_chart(fig, use_container_width=True)
 
 with c2:
@@ -134,8 +136,11 @@ with c2:
     fig2.update_layout(height=380, template="plotly_white",
                        paper_bgcolor="white", plot_bgcolor="white",
                        font=dict(color="black"),
-                       title="שיעור בעלי 2+ דוחות — מסלול × מגזר")
-    fig2.update_yaxes(ticksuffix="%", title="")
+                       margin=dict(l=135, r=40, t=90, b=80),
+                       autosize=False,
+                       title="שיעור בעלי 2+ דוחות — מסלול × מגזר",title_font_color="black", legend_title="מסלול", legend=dict(font=dict(color="black")))
+    fig2.update_yaxes(ticksuffix="%", title="", automargin=True,tickfont=dict(color="black"))
+    fig2.update_xaxes(automargin=True,title="", tickfont=dict(color="black"))
     st.plotly_chart(fig2, use_container_width=True)
 
 render_insight("report_count", df)
@@ -170,29 +175,29 @@ tab_labels = ["כללי", "מגדר", "גיל", "מסלול", "כמות דוחו
 tabs = st.tabs(tab_labels)
 
 with tabs[0]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title=None), use_container_width=True)
+    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות בכללי"), use_container_width=True)
 
 with tabs[1]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, group_col="gender"), use_container_width=True)
+    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מגדר", group_col="gender"), use_container_width=True)
 
 with tabs[2]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, group_col="age_band"), use_container_width=True)
+    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי גיל", group_col="age_band"), use_container_width=True)
 
 with tabs[3]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, group_col="trial_label"), use_container_width=True)
+    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מסלול", group_col="trial_label"), use_container_width=True)
 
 with tabs[4]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, group_col="report_count_bin"), use_container_width=True)
+    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי כמות דוחות", group_col="report_count_bin"), use_container_width=True)
 
 with tabs[5]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, group_col="report_year_bin"), use_container_width=True)
+    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי שנת דוח", group_col="report_year_bin"), use_container_width=True)
 
 with tabs[6]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, group_col="report_channel_bin"), use_container_width=True)
+    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי אופן קבלה", group_col="report_channel_bin"), use_container_width=True)
 
 with tabs[7]:
     if "mahoz_short" in df.columns:
-        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, group_col="mahoz_short", height=560), use_container_width=True)
+        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מחוז", group_col="mahoz_short", height=560), use_container_width=True)
     else:
         st.info("נתוני המחוזות לא זמינים")
 
@@ -217,13 +222,15 @@ with c1:
     fig.update_layout(showlegend=False, height=380, template="plotly_white",
                       paper_bgcolor="white", plot_bgcolor="white",
                       font=dict(color="black"),
-                      title="מקור הדוח")
+                      margin=dict(l=135, r=40, t=90, b=80),
+                      autosize=False,
+                      title="מקור הדוח",title_font_color="black", coloraxis_showscale=False)
     fig.update_traces(textposition="inside", insidetextanchor="middle",
                       constraintext="inside", cliponaxis=False)
     for tr in fig.data:
         tr.textfont = dict(color=_text_on(tr.marker.color))
-    fig.update_yaxes(ticksuffix="%", title="", range=[0, max(s["pct"].max() * 1.15, 10)])
-    fig.update_xaxes(title="")
+    fig.update_yaxes(dict(tickfont=dict(color="black"), range=[0, max(s["pct"].max() * 1.15, 10)], automargin=True))
+    fig.update_xaxes(dict(tickfont=dict(color="black"), title="", automargin=True))
     st.plotly_chart(fig, use_container_width=True)
 
 with c2:
@@ -237,7 +244,9 @@ with c2:
     fig.update_layout(showlegend=False, height=380, template="plotly_white",
                       paper_bgcolor="white", plot_bgcolor="white",
                       font=dict(color="black"),
-                      title="אופן קבלת הדוח", coloraxis_showscale=False)
+                      margin=dict(l=135, r=40, t=90, b=80),
+                      autosize=False,
+                      title="אופן קבלת הדוח",title_font_color="black", coloraxis_showscale=False)
     # Colorscale produces a per-bar fill; pick text color per-bar from the pct.
     pct_max, pct_min = float(s["pct"].max()), float(s["pct"].min())
     span = max(pct_max - pct_min, 1e-9)
@@ -245,8 +254,8 @@ with c2:
     fig.update_traces(textposition="inside", insidetextanchor="middle",
                       constraintext="inside", cliponaxis=False,
                       textfont=dict(color=per_text))
-    fig.update_xaxes(ticksuffix="%", title="", range=[0, max(s["pct"].max() * 1.2, 10)])
-    fig.update_yaxes(title="", autorange="reversed")
+    fig.update_xaxes(dict(tickfont=dict(color="black"), ticksuffix="%", title="", range=[0, max(s["pct"].max() * 1.2, 10)], automargin=True))
+    fig.update_yaxes(dict(tickfont=dict(color="black"), title="", autorange="reversed", automargin=True,showgrid=True, gridcolor="black",gridwidth=1.2))
     st.plotly_chart(fig, use_container_width=True)
 
 

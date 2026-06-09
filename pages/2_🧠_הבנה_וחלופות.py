@@ -150,13 +150,15 @@ with c1:
     fig.update_layout(showlegend=False, height=380, template="plotly_white",
                       paper_bgcolor="white", plot_bgcolor="white",
                       font=dict(color="black"),
+                      margin=dict(l=135, r=40, t=90, b=80),
+                      autosize=False,
                       title="מודעות בקרב מי שלא ביקשו להישפט")
     fig.update_traces(textposition="inside", insidetextanchor="middle",
                       constraintext="inside", cliponaxis=False)
     for tr in fig.data:
         tr.textfont = dict(color=_text_on(tr.marker.color))
     fig.update_yaxes(ticksuffix="%", title="", automargin=True)
-    fig.update_xaxes(title="")
+    fig.update_xaxes(title="", automargin=True)
     st.plotly_chart(fig, use_container_width=True)
 
 with c2:
@@ -180,8 +182,11 @@ with c2:
         fig.update_layout(height=380, template="plotly_white",
                           paper_bgcolor="white", plot_bgcolor="white",
                           font=dict(color="black"),
+                          margin=dict(l=135, r=40, t=90, b=80),
+                          autosize=False,
                           title="מודעות לחלופות לפי מגזר")
         fig.update_yaxes(ticksuffix="%", title="", automargin=True)
+        fig.update_xaxes(automargin=True)
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.plotly_chart(empty_state(), use_container_width=True)
@@ -259,8 +264,12 @@ with c1:
         fig.update_layout(showlegend=False, height=400, template="plotly_white",
                           paper_bgcolor="white", plot_bgcolor="white",
                           font=dict(color="black"),
-                          title="שיעור בקשת המרה לאזהרה (מודעים בלבד)")
-        fig.update_yaxes(ticksuffix="%", range=[0, 80], automargin=True)
+                          margin=dict(l=135, r=40, t=90, b=80),
+                          autosize=False,
+                          title="שיעור בקשת המרה לאזהרה (מודעים בלבד)",
+                          title_font_color="black")
+        fig.update_yaxes( ticksuffix="%", range=[0, 80], automargin=True,tickfont=dict(color="black"), title_font=dict(color="black"),title_text="")
+        fig.update_xaxes(automargin=True,tickfont=dict(color="black"), title_font=dict(color="black"),title_text="")
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.plotly_chart(empty_state(), use_container_width=True)
@@ -284,9 +293,17 @@ with c2:
             insidetextanchor="middle", textfont=dict(color="white"),
         ))
         fig.update_layout(title="חסמים לבקשת הישפטות / סיבות אי-המרה",
-                          height=400, template="plotly_white")
-        fig.update_xaxes(ticksuffix="%", title="")
-        fig.update_yaxes(title="", automargin=True)
+                          height=400, template="plotly_white",
+                          paper_bgcolor="white", plot_bgcolor="white",
+                          font=dict(color="black"),
+                          margin=dict(l=135, r=40, t=90, b=80),
+                          autosize=False,
+                          title_font=dict(color="black"),
+                          legend=dict(font=dict(color="black")))
+        fig.update_xaxes(ticksuffix="%", title="", automargin=True,
+                          tickfont=dict(color="black"), title_font=dict(color="black"))
+        fig.update_yaxes(title="", automargin=True,
+                          tickfont=dict(color="black"), title_font=dict(color="black"))
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.plotly_chart(empty_state(), use_container_width=True)
@@ -322,7 +339,15 @@ if rows:
                           constraintext="inside", cliponaxis=False,
                           textfont=dict(color="white", size=14)))
     fig.update_layout(barmode="stack", template="plotly_white", height=420,
-                      title="שיעור תשלום הקנס בקרב מי שלא ביקשו להישפט")
+                      paper_bgcolor="white", plot_bgcolor="white",
+                      font=dict(color="black"),
+                      margin=dict(l=135, r=40, t=90, b=80),
+                      autosize=False,
+                      title=dict(text="שיעור תשלום הקנס בקרב מי שלא ביקשו להישפט",
+                                 font=dict(color="black")),
+                      legend=dict(font=dict(color="black")),
+                      xaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True),
+                      yaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True))
     fig.update_yaxes(ticksuffix="%", range=[0, 100], automargin=True)
     st.plotly_chart(fig, use_container_width=True)
 else:

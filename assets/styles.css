@@ -153,3 +153,16 @@ html, body, [class*="st-"], .stMarkdown, .stMetric, .stRadio label,
 
 /* ------- Misc spacing ------- */
 hr { border-color: #e0e9f5; }
+
+/* ------- Sidebar nav: rename the main "traffic" page to "🏠 בית" ------- */
+[data-testid="stSidebarNav"] ul li:first-child a span {
+    font-size: 0 !important;
+    line-height: 0 !important;
+}
+[data-testid="stSidebarNav"] ul li:first-child a span::before {
+    content: "🏠 בית";
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: 'Assistant', sans-serif;
+    direction: rtl;
+}

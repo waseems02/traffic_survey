@@ -78,15 +78,16 @@ def _base_layout(fig: go.Figure, height: int = 420) -> go.Figure:
         plot_bgcolor="white",
         font=dict(family="Assistant, Arial, sans-serif", size=13, color="black"),
         title=dict(font=dict(color="black", size=15), y=0.97, yanchor="top"),
-        margin=dict(l=30, r=30, t=90, b=80),
+        margin=dict(l=135, r=40, t=90, b=80),
         height=height,
+        autosize=False,  # Stop Streamlit from auto-compressing the chart and cutting RTL labels
         legend=dict(
             orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1,
             font=dict(color="black"), bgcolor="rgba(0,0,0,0)",
         ),
         hoverlabel=dict(font_size=13, font_family="Assistant"),
-        xaxis=dict(tickfont=dict(color="black"), title=dict(font=dict(color="black"))),
-        yaxis=dict(tickfont=dict(color="black"), title=dict(font=dict(color="black"))),
+        xaxis=dict(tickfont=dict(color="black"), title=dict(font=dict(color="black")), automargin=True),
+        yaxis=dict(tickfont=dict(color="black"), title=dict(font=dict(color="black")), automargin=True),
     )
     # Force every bar trace to keep its text label INSIDE the plot area.
     fig.update_traces(
@@ -156,7 +157,7 @@ def stacked_pct_bar(
 
     fig.update_layout(barmode="stack", title=title)
     fig.update_xaxes(title="")
-    fig.update_yaxes(title="אחוז מהמשיבים", range=[0, 100], ticksuffix="%")
+    fig.update_yaxes(title="", range=[0, 100], ticksuffix="%")
 
     annotations = []
     for i, grp in enumerate(pct.index):

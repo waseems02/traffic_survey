@@ -174,11 +174,19 @@ fig = px.bar(
 fig.update_traces(texttemplate="%{text}%", textposition="inside",
                     insidetextanchor="middle",
                     constraintext="inside", cliponaxis=False,
-                    textfont=dict(color="white", size=11))
+                    textfont=dict(color="black", size=11))
 fig.update_layout(template="plotly_white", height=480,
-                    title=f"{y_label} בתוך כל {x_label}")
-fig.update_yaxes(ticksuffix="%", range=[0, 100], title="")
-fig.update_xaxes(title=x_label)
+                    paper_bgcolor="white", plot_bgcolor="white",
+                    font=dict(color="black"),
+                    margin=dict(l=135, r=40, t=90, b=80),
+                    autosize=False,
+                    title=dict(text=f"{y_label} בתוך כל {x_label}",
+                               font=dict(color="black")),
+                    legend=dict(font=dict(color="black")),legend_title=dict(text=y_label, font=dict(color="black")))
+fig.update_yaxes(ticksuffix="%", range=[0, 100], title="", automargin=True,
+                    tickfont=dict(color="black"), title_font=dict(color="black"))
+fig.update_xaxes(title=x_label, automargin=True,
+                    tickfont=dict(color="black"), title_font=dict(color="black"))
 st.plotly_chart(fig, use_container_width=True)
 
 

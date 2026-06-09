@@ -142,6 +142,36 @@ st.plotly_chart(gender_outcomes_stack(filtered), use_container_width=True)
 st.markdown("<div class='section-header'>זרימת המסע — מקבלת הדוח לתוצאה</div>", unsafe_allow_html=True)
 st.plotly_chart(sankey_trial_flow(filtered), use_container_width=True)
 
+try:
+    from scipy.stats import chi2_contingency
+    _trial_test_df = filtered.dropna(subset=["migzar", "requested_trial"])
+    _ct = pd.crosstab(_trial_test_df["migzar"], _trial_test_df["requested_trial"])
+    if _ct.shape[0] >= 2 and _ct.shape[1] >= 2 and _ct.values.sum() >= 5:
+        _chi2, _p, _dof, _ = chi2_contingency(_ct)
+        if _p < 0.05:
+            _verdict = f"✅ קיים הבדל מובהק סטטיסטית בין המגזרים בבחירה להישפט (p = {_p:.4f} < 0.05)."
+            _note = "ההבדל בין הקבוצות אינו מקרי — הבחירה להיכנס להליך המשפטי תלויה במגזר."
+        else:
+            _verdict = f"⚪ לא נמצא הבדל מובהק סטטיסטית בין המגזרים בבחירה להישפט (p = {_p:.4f} ≥ 0.05)."
+            _note = "ההבדלים שנצפו בגרף עשויים לנבוע מהשונות במדגם ולא מהבדל אמיתי באוכלוסייה."
+        st.markdown(
+            f"""
+            <div class='insight-box'>
+              <h4>🧮 מבחן Chi-square — האם הבחירה להישפט תלויה במגזר?</h4>
+              <p>χ² = {_chi2:.2f} | dof = {_dof} | p-value = {_p:.4f}</p>
+              <p><b>{_verdict}</b></p>
+              <p>{_note}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.caption("💡 אין מספיק נתונים בסינון הנוכחי לחישוב מבחן Chi-square על תהליך ההישפטות.")
+except ImportError:
+    st.caption("💡 התקן את scipy לקבלת מבחני סטטיסטיקה (pip install scipy)")
+except Exception as _exc:
+    st.caption(f"לא ניתן לחשב מבחן Chi-square: {_exc}")
+
 
 st.markdown("<div class='section-header'>הרכב המדגם</div>", unsafe_allow_html=True)
 c1, c2 = st.columns([1.2, 1])
@@ -197,7 +227,7 @@ st.markdown(
     """
     <div class='insight-box'>
       <h4>🎯 מטרת המחקר</h4>
-      <p>הבנת חוויית האזרח המקבל דו"ח תעבורה — מקבלת הדו"ח, דרך מודעות לחלופות התגובה והתמודדות בפועל, ההליך המשפטי, ועד שביעות רצון והמלצות. המחקר משמש כ-As-Is טרום ביצוע רפורמת חוק "הפרות תעבורה מנהליות" של משרד המשפטים.</p>
+      <p>הבנת חוויית האזרח המקבל דו"ח תעבורה , דרך מודעות לחלופות התגובה והתמודדות בפועל, ההליך המשפטי, ועד שביעות רצון והמלצות. המחקר משמש כ-As-Is טרום ביצוע רפורמת חוק "הפרות תעבורה מנהליות" של משרד המשפטים.</p>
       <p><b>מתודולוגיה:</b> מילוי עצמי באינטרנט (Panel View), דגימה הסתברותית אקראית, עבודת שדה 11/2025 – 1/2026.</p>
       <p><b>מדגם:</b> 505 מרואיינים — 263 שבחרו לא להישפט (177 יהודים, 86 ערבים) | 242 שבחרו להישפט (161 יהודים, 81 ערבים).</p>
     </div>
