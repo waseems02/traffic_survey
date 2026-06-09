@@ -89,19 +89,19 @@ with k4:
 # =========================================================
 st.markdown("<div class='section-header'>1. תפיסות כלפי קבלת הדוח</div>", unsafe_allow_html=True)
 
-st.plotly_chart(
-    likert_summary_strip(
-        df,
-        columns=[
-            ("understand_offense_num", "הבנת העבירה והעונש"),
-            ("understand_options_num", "הבנת אפשרויות הפעולה"),
-            ("report_justified_num", "מוצדקות הדוח"),
-            ("voice_heard_num", "האפשרות להשמיע קול"),
-        ],
-        height=330,
-    ),
-    use_container_width=True,
+fig = likert_summary_strip(
+    df,
+    columns=[
+        ("understand_offense_num", "הבנת העבירה והעונש"),
+        ("understand_options_num", "הבנת אפשרויות הפעולה"),
+        ("report_justified_num", "מוצדקות הדוח"),
+        ("voice_heard_num", "האפשרות להשמיע קול"),
+    ],
+    height=330,
 )
+fig.update_traces(textfont_color='white')
+fig.update_layout(title=dict(text=""))
+st.plotly_chart(fig, use_container_width=True)
 
 c1, c2 = st.columns(2)
 for col, label, container in [
@@ -111,7 +111,7 @@ for col, label, container in [
     with container:
         work = df.copy()
         work["likert_band"] = likert_to_3band(work[col])
-        work["group"] = work["trial_label"] + " — " + work["migzar"].fillna("לא ידוע")
+        work["group"] = work["trial_label"] + " <br> " + work["migzar"].fillna("לא ידוע")
         fig = stacked_pct_bar(
             work.dropna(subset=["likert_band", "group"]),
             group_col="group",
@@ -119,7 +119,6 @@ for col, label, container in [
             category_order=LIKERT_3BAND_ORDER,
             color_map=LIKERT_3BAND_COLORS,
             show_mean=True,
-            mean_col=f"{col}_num",
             title=label,
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -136,7 +135,7 @@ c1, c2 = st.columns([1, 1.3])
 with c1:
     no_trial = df[~df["requested_trial"]]
     awareness = pd.DataFrame({
-        "category": ["ידעו על המרה לאזהרה", "ידעו על בקשה להישפט", "לא ידעו כלל"],
+        "category": ["ידעו על<br>  המרה לאזהרה", "ידעו על <br> בקשה להישפט", "לא ידעו כלל"],
         "pct": [
             no_trial["aware_convert"].mean(skipna=True) * 100,
             no_trial["aware_trial"].mean(skipna=True) * 100,
@@ -147,18 +146,18 @@ with c1:
                   color="category",
                   color_discrete_sequence=[PALETTE["accent"], PALETTE["secondary"], PALETTE["danger"]],
                   text=[f"{v:.1f}%" for v in awareness["pct"]])
-    fig.update_layout(showlegend=False, height=380, template="plotly_white",
+    fig.update_layout(showlegend=True, height=380, template="plotly_white",legend_font_color="black",legend_title_text="סוג המודעות",
+                      legend_title_font_color="black",
                       paper_bgcolor="white", plot_bgcolor="white",
                       font=dict(color="black"),
-                      margin=dict(l=135, r=40, t=90, b=80),
                       autosize=False,
-                      title="מודעות בקרב מי שלא ביקשו להישפט")
+                      title="מודעות בקרב מי שלא ביקשו להישפט",title_font_color="black",)
     fig.update_traces(textposition="inside", insidetextanchor="middle",
                       constraintext="inside", cliponaxis=False)
     for tr in fig.data:
         tr.textfont = dict(color=_text_on(tr.marker.color))
-    fig.update_yaxes(ticksuffix="%", title="", automargin=True)
-    fig.update_xaxes(title="", automargin=True)
+    fig.update_yaxes(ticksuffix="%", title="", automargin=True,tickfont=dict(color="black"))
+    fig.update_xaxes(title="", automargin=True,tickfont=dict(color="black"),tickangle=0)
     st.plotly_chart(fig, use_container_width=True)
 
 with c2:
@@ -180,13 +179,13 @@ with c2:
         for tr in fig.data:
             tr.textfont = dict(color=_text_on(tr.marker.color))
         fig.update_layout(height=380, template="plotly_white",
-                          paper_bgcolor="white", plot_bgcolor="white",
+                          paper_bgcolor="white", plot_bgcolor="white",legend_font_color="black",
+                          legend_title_text="סוג המודעות",legend_title_font_color="black",
                           font=dict(color="black"),
-                          margin=dict(l=135, r=40, t=90, b=80),
                           autosize=False,
-                          title="מודעות לחלופות לפי מגזר")
-        fig.update_yaxes(ticksuffix="%", title="", automargin=True)
-        fig.update_xaxes(automargin=True)
+                          title="מודעות לחלופות לפי מגזר",title_font_color="black",)
+        fig.update_yaxes(ticksuffix="%", title="", automargin=True,tickfont=dict(color="black"))
+        fig.update_xaxes(title="", automargin=True,tickfont=dict(color="black"))
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.plotly_chart(empty_state(), use_container_width=True)

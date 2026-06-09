@@ -867,7 +867,7 @@ def sector_outcomes_stack(df: pd.DataFrame, height: int = 340) -> go.Figure:
         outcomes.append(("ביקשו להישפט", df[df["requested_trial"]]))
     if {"requested_trial", "paid_fine_actual"}.issubset(df.columns):
         outcomes.append((
-            "שילמו את הקנס (מבין מי שלא ביקשו להישפט)",
+            " שילמו את הקנס<br> (מבין מי שלא ביקשו להישפט)",
             df[(~df["requested_trial"]) & (df["paid_fine_actual"] == "כן")],
         ))
     if "process_satisfaction_num" in df.columns:

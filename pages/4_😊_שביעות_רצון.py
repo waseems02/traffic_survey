@@ -89,17 +89,17 @@ with k4:
 # =========================================================
 st.markdown("<div class='section-header'>1. שביעות רצון מהתהליך והשפעה על נהיגה עתידית</div>", unsafe_allow_html=True)
 
-st.plotly_chart(
-    likert_summary_strip(
-        df,
-        columns=[
-            ("process_satisfaction_num", "שביעות רצון מהתהליך"),
-            ("future_caution_num", "עידוד לנהיגה זהירה בעתיד"),
-        ],
-        height=280,
-   ),
-    use_container_width=True,
-)
+fig = likert_summary_strip(
+    df,
+    columns=[
+        ("process_satisfaction_num", "שביעות רצון מהתהליך"),
+        ("future_caution_num", "עידוד לנהיגה זהירה בעתיד"),
+    ],
+    height=280,
+    )
+fig.update_traces(textfont_color='white')
+fig.update_layout(title=dict(text=""))
+st.plotly_chart(fig,use_container_width=True)
 
 c1, c2 = st.columns(2)
 with c1:
@@ -111,7 +111,6 @@ with c1:
             work.dropna(subset=["likert_band", "group"]),
             group_col="group", value_col="likert_band",
             category_order=LIKERT_3BAND_ORDER, color_map=LIKERT_3BAND_COLORS,
-            show_mean=True, mean_col="process_satisfaction_num",
             title="שביעות רצון — מסלול × מגזר",
         ),
         use_container_width=True,
@@ -125,7 +124,7 @@ with c2:
             work.dropna(subset=["likert_band", "group"]),
             group_col="group", value_col="likert_band",
             category_order=LIKERT_3BAND_ORDER, color_map=LIKERT_3BAND_COLORS,
-            show_mean=True, mean_col="future_caution_num",
+            show_mean=True,
             title="עידוד לנהיגה זהירה — מסלול × מגזר",
         ),
         use_container_width=True,
@@ -230,7 +229,7 @@ if len(rec):
                             autosize=False,
                             title=dict(text="המלצות לחבר — לפי מסלול × מגזר",
                                        font=dict(color="black")),
-                            legend=dict(font=dict(color="black")),
+                            legend=dict(font=dict(color="black")),legend_title_font_color="black",
                             xaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True),
                             yaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True))
         fig2.update_yaxes(ticksuffix="%", title="", automargin=True)
@@ -250,17 +249,16 @@ st.markdown("<div class='section-header'>3. שביעות רצון לפי מחו�
 if "mahoz_short" in df.columns and df["mahoz_short"].notna().any():
     c1, c2 = st.columns(2)
     with c1:
-        st.plotly_chart(
             district_stats_bar(df, "process_satisfaction_num", title="שביעות רצון מהתהליך — לפי מחוז"),
             use_container_width=True,
-        )
+    
     with c2:
         st.plotly_chart(
             district_stats_bar(df, "future_caution_num", title="עידוד לנהיגה זהירה — לפי מחוז"),
             use_container_width=True,
         )
 
-    st.plotly_chart(
+    st.plotly_chart(    
         district_comparison_grouped(
             df,
             numeric_cols=[

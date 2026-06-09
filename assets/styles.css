@@ -3,6 +3,25 @@
    RTL / Hebrew / High-end visual system
    ============================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
+
+/* Ensure Streamlit's Material icons (sidebar toggle, etc.) render as glyphs, not raw ligature text */
+span[data-testid="stIconMaterial"],
+.material-symbols-rounded,
+[class*="material-symbols"] {
+    font-family: 'Material Symbols Rounded' !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    direction: ltr !important;
+    text-align: center !important;
+    font-feature-settings: 'liga';
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    white-space: nowrap;
+    letter-spacing: normal;
+    word-wrap: normal;
+}
 
 /* ------- Core RTL + typography ------- */
 html, body, [class*="st-"], .stMarkdown, .stMetric, .stRadio label,

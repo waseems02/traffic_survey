@@ -103,20 +103,18 @@ with c1:
     work = req.copy()
     work["likert_band"] = likert_to_3band(work["trial_clarity"])
     work["group"] = work["migzar"].fillna("לא ידוע")
-    st.plotly_chart(
-        stacked_pct_bar(
-            work.dropna(subset=["likert_band", "group"]),
-            group_col="group", value_col="likert_band",
-            category_order=LIKERT_3BAND_ORDER, color_map=LIKERT_3BAND_COLORS,
-            show_mean=True, mean_col="trial_clarity_num",
-            title="בהירות תהליך הגשת הבקשה — לפי מגזר",
-        ),
-        use_container_width=True,
+    fig = stacked_pct_bar(
+        work.dropna(subset=["likert_band", "group"]),
+        group_col="group", value_col="likert_band",
+        category_order=LIKERT_3BAND_ORDER, color_map=LIKERT_3BAND_COLORS,
+        show_mean=True, mean_col="trial_clarity_num",
+        title="בהירות תהליך הגשת הבקשה — לפי מגזר",
     )
+    fig.update_layout(height=520, margin=dict(l=10, r=10, t=60, b=80))
+    st.plotly_chart(fig, use_container_width=True)
 
 with c2:
-    st.plotly_chart(
-        donut(
+        fig_donut=donut(
             req,
             "tracked_status",
             title="האם ידעו לעקוב אחר הסטטוס?",
@@ -125,9 +123,13 @@ with c2:
                 "כן, אבל באופן חלקי בלבד/ לא מאוד ברור כיצד לעקוב": PALETTE["warn"],
                 "לא ידעתי איך לעקוב": PALETTE["danger"],
             },
-        ),
-        use_container_width=True,
-    )
+        )
+        fig_donut.update_layout(height=560,
+                                margin=dict(l=10, r=10, t=60, b=80)) 
+    
+    # 3. Pass the resized figure to Streamlit
+        st.plotly_chart(fig_donut, use_container_width=True)
+    
 
 render_insight("trial_clarity", df)
 
@@ -139,26 +141,51 @@ st.markdown("<div class='section-header'>2. בקשת וקבלת ראיות</div>
 
 c1, c2, c3 = st.columns(3)
 with c1:
-    st.plotly_chart(
-        donut(req, "evidence_requested", title="האם ביקשו ראיות נוספות?"),
-        use_container_width=True,
+    # 1. Capture the donut chart
+    fig1 = donut(req, "evidence_requested", title="האם ביקשו ראיות נוספות?")
+    
+    # 2. Maximize size and push legend down
+    fig1.update_layout(
+        height=480,
+        margin=dict(l=10, r=10, t=60, b=80),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.15,
+            xanchor="center",
+            x=0.5
+        )
     )
+    st.plotly_chart(fig1, use_container_width=True)
 
 with c2:
     asked = req[req["evidence_requested"] == "כן"]
-    st.plotly_chart(
-        donut(
-            asked,
-            "evidence_received",
-            title="האם קיבלו את הראיות? (מתוך מי שביקשו)",
-            color_map={
-                "כן, באופן מלא": PALETTE["accent"],
-                "כן, באופן חלקי": PALETTE["warn"],
-                "לא קיבלתי כלל": PALETTE["danger"],
-            },
-        ),
-        use_container_width=True,
+    
+    # 1. Capture the conditional donut chart
+    fig2 = donut(
+        asked,
+        "evidence_received",
+        title="האם קיבלו את הראיות? (מתוך מי שביקשו)",
+        color_map={
+            "כן, באופן מלא": PALETTE["accent"],
+            "כן, באופן חלקי": PALETTE["warn"],
+            "לא קיבלתי כלל": PALETTE["danger"],
+        },
     )
+    
+    # 2. Maximize size and push legend down to match c1
+    fig2.update_layout(
+        height=480,
+        margin=dict(l=10, r=10, t=60, b=80),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.15,
+            xanchor="center",
+            x=0.5
+        )
+    )
+    st.plotly_chart(fig2, use_container_width=True)
 
 with c3:
     if "evidence_difficulty" in req.columns:
@@ -176,16 +203,19 @@ with c3:
                 insidetextanchor="middle",
                 textfont=dict(color=[_text_on(c) for c in fill_per_bar]),
             ))
+            
+            # Optimized the bar chart layout to visually match columns 1 and 2
             fig.update_layout(
                 template="plotly_white",
                 paper_bgcolor="white", plot_bgcolor="white",
                 font=dict(color="black"),
-                margin=dict(l=135, r=40, t=90, b=80),
+                margin=dict(l=30, r=30, t=60, b=80), # Tightened left margin from 135 to 30
                 autosize=False,
-                title="קושי בקבלת הראיות", height=400,
+                title="קושי בקבלת הראיות",title_font=dict(color="black"),
+                height=480,                          # Matched height perfectly to the donuts
             )
-            fig.update_yaxes(title="כמות משיבים", automargin=True)
-            fig.update_xaxes(automargin=True)
+            fig.update_yaxes(title="כמות משיבים", automargin=True,tickfont=dict(color='black'),title_font=dict(color='black')) # Added y-axis title and optimized margins
+            fig.update_xaxes(automargin=True, tickangle=0,tickfont=dict(color='black')) # Forced flat horizontal labels
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.plotly_chart(empty_state(), use_container_width=True)
