@@ -1,4 +1,4 @@
-כדי להריץ את הדאשבורד , צריך לפתוח Terminal דרך VSCode או powershell Windows ולכתוב בתוך הTerminal : 
+כדי להריץ את הדאשבורד , צריך לפתוח ליצור קובץ (לבחור שם- אני בחרתי vehicle2) ואז להיכנס ל-Terminal דרך VSCode או powershell Windows ולכתוב בתוך הTerminal : 
 python -m streamlit run traffic.py
 זה פותח את הדאשבורד לצפייה.
 כמובן , צריך קודם כל להיות בתוך ה-cd , כלומר , הצעדים צריכים להיות:
