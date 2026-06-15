@@ -100,7 +100,7 @@ fig = likert_summary_strip(
     height=330,
 )
 fig.update_traces(textfont_color='white')
-fig.update_layout(title=dict(text=""))
+fig.update_layout(title=dict(text="תפיסות הליבה לגבי קבלת הדוח", font=dict(color="black")))
 st.plotly_chart(fig, use_container_width=True)
 
 c1, c2 = st.columns(2)
@@ -239,7 +239,7 @@ render_insight("lawyer", df)
 # =========================================================
 # 4. המרת הדוח לאזהרה + חסמי הישפטות (PPT 22)
 # =========================================================
-st.markdown("<div class='section-header'>4. המרת הדוח לאזהרה וחסמי הישפטות</div>", unsafe_allow_html=True)
+st.markdown("<div class='section-header'>4. המרת הדוח לאזהרה והחסמים לבקשה להישפט</div>", unsafe_allow_html=True)
 
 c1, c2 = st.columns([1, 1.2])
 with c1:
@@ -265,7 +265,7 @@ with c1:
                           font=dict(color="black"),
                           margin=dict(l=135, r=40, t=90, b=80),
                           autosize=False,
-                          title="שיעור בקשת המרה לאזהרה (מודעים בלבד)",
+                          title="שיעור בקשות להמרה לאזהרה (בקרב המודעים לאפשרות בלבד)",
                           title_font_color="black")
         fig.update_yaxes( ticksuffix="%", range=[0, 80], automargin=True,tickfont=dict(color="black"), title_font=dict(color="black"),title_text="")
         fig.update_xaxes(automargin=True,tickfont=dict(color="black"), title_font=dict(color="black"),title_text="")

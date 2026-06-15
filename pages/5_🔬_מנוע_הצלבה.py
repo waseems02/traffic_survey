@@ -174,7 +174,7 @@ fig = px.bar(
 fig.update_traces(texttemplate="%{text}%", textposition="inside",
                     insidetextanchor="middle",
                     constraintext="inside", cliponaxis=False,
-                    textfont=dict(color="black", size=11))
+                    textfont=dict(color="black", size=13))
 fig.update_layout(template="plotly_white", height=480,
                     paper_bgcolor="white", plot_bgcolor="white",
                     font=dict(color="black"),

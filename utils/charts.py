@@ -39,8 +39,30 @@ YESNO_COLORS = {"כן": "#0066cc", "לא": "#cc3333"}
 
 
 def _text_on(color: str) -> str:
-    """Always return 'black' — user requirement: all in-bar text is black even on dark fills."""
-    return "black"
+    """Pick black or white text based on background luminance — keeps in-bar labels readable on dark fills."""
+    if not color:
+        return "black"
+    c = color.strip()
+    if c.startswith("rgb"):
+        try:
+            nums = c[c.find("(") + 1 : c.rfind(")")].split(",")
+            r, g, b = [int(float(x)) for x in nums[:3]]
+        except Exception:
+            return "black"
+    elif c.startswith("#"):
+        h = c.lstrip("#")
+        if len(h) == 3:
+            h = "".join(ch * 2 for ch in h)
+        if len(h) != 6:
+            return "black"
+        try:
+            r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        except ValueError:
+            return "black"
+    else:
+        return "black"
+    luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return "white" if luminance < 0.55 else "black"
 
 
 def _add_small_segment_warning(fig: go.Figure, group_counts: dict, threshold: int = 10) -> go.Figure:
@@ -60,7 +82,7 @@ def _add_small_segment_warning(fig: go.Figure, group_counts: dict, threshold: in
             xref="paper", yref="paper",
             x=0.5, y=0.94,
             showarrow=False,
-            font=dict(size=10, color="#cc3333"),
+            font=dict(size=12, color="#cc3333"),
             bgcolor="rgba(255,255,255,0.95)",
             bordercolor="rgba(204,51,51,0.5)",
             borderwidth=1,
@@ -76,18 +98,18 @@ def _base_layout(fig: go.Figure, height: int = 420) -> go.Figure:
         template="plotly_white",
         paper_bgcolor="white",
         plot_bgcolor="white",
-        font=dict(family="Assistant, Arial, sans-serif", size=13, color="black"),
-        title=dict(font=dict(color="black", size=15), y=0.97, yanchor="top"),
+        font=dict(family="Assistant, Arial, sans-serif", size=15, color="black"),
+        title=dict(font=dict(color="black", size=18), y=0.97, yanchor="top"),
         margin=dict(l=135, r=40, t=90, b=80),
         height=height,
         autosize=False,  # Stop Streamlit from auto-compressing the chart and cutting RTL labels
         legend=dict(
             orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1,
-            font=dict(color="black"), bgcolor="rgba(0,0,0,0)",
+            font=dict(color="black", size=14), bgcolor="rgba(0,0,0,0)",
         ),
-        hoverlabel=dict(font_size=13, font_family="Assistant"),
-        xaxis=dict(tickfont=dict(color="black"), title=dict(font=dict(color="black")), automargin=True),
-        yaxis=dict(tickfont=dict(color="black"), title=dict(font=dict(color="black")), automargin=True),
+        hoverlabel=dict(font_size=14, font_family="Assistant"),
+        xaxis=dict(tickfont=dict(color="black", size=14), title=dict(font=dict(color="black", size=14)), automargin=True),
+        yaxis=dict(tickfont=dict(color="black", size=14), title=dict(font=dict(color="black", size=14)), automargin=True),
     )
     # Force every bar trace to keep its text label INSIDE the plot area.
     fig.update_traces(
@@ -142,17 +164,18 @@ def stacked_pct_bar(
     fig = go.Figure()
     cmap = color_map or LIKERT_3BAND_COLORS
     for cat in pct.columns:
+        fill = cmap.get(cat, PALETTE["muted"])
         fig.add_trace(go.Bar(
             x=pct.index.astype(str),
             y=pct[cat].values,
             name=str(cat),
-            marker_color=cmap.get(cat, PALETTE["muted"]),
+            marker_color=fill,
             marker_line=dict(color=_PALETTE_DARK["primary"], width=1),
             hovertemplate=f"%{{x}}<br>{cat}: %{{y:.1f}}%<extra></extra>",
             text=[f"{v:.0f}%" if v >= 8 else "" for v in pct[cat].values],
             textposition="inside",
             insidetextanchor="middle",
-            textfont=dict(color="black", size=12),
+            textfont=dict(color=_text_on(fill), size=14),
         ))
 
     fig.update_layout(barmode="stack", title=title)
@@ -175,7 +198,7 @@ def stacked_pct_bar(
         annotations.append(dict(
             x=str(grp), y=97, xref="x", yref="y",
             text=txt, showarrow=False,
-            font=dict(size=11, color="#1a1a2e"),
+            font=dict(size=13, color="#1a1a2e"),
             bgcolor="rgba(255,255,255,0.85)",
             bordercolor="rgba(0,0,0,0.15)", borderwidth=1, borderpad=3,
         ))
@@ -221,7 +244,7 @@ def horizontal_pct_bar(
             text=[f"{v:.0f}%" if v >= 8 else "" for v in s.values],
             textposition="inside",
             insidetextanchor="middle",
-            textfont=dict(color=_text_on(fill), size=11),
+            textfont=dict(color=_text_on(fill), size=13),
             customdata=[counts[label] for label in s.index],
             hovertemplate="%{y}: %{x:.1f}%<br>n=%{customdata}<extra></extra>",
         ))
@@ -252,7 +275,7 @@ def horizontal_pct_bar(
                 text=[f"{v:.0f}%" if v >= 8 else "" for v in sub["pct"]],
                 textposition="inside",
                 insidetextanchor="middle",
-                textfont=dict(color=_text_on(fill), size=10),
+                textfont=dict(color=_text_on(fill), size=13),
                 customdata=sub["n"].tolist(),
                 hovertemplate=f"{g}<br>%{{y}}: %{{x:.1f}}%<br>n=%{{customdata}}<extra></extra>",
             ))
@@ -291,7 +314,7 @@ def grouped_bar(
         text_auto=".0f" if text else False,
     )
     fig.update_layout(title=title)
-    fig.update_traces(textposition="inside", textfont_size=12,
+    fig.update_traces(textposition="inside", textfont_size=14,
                       cliponaxis=False, constraintext="inside", insidetextanchor="middle")
     return _base_layout(fig, height=height)
 
@@ -314,9 +337,10 @@ def likert_summary_strip(df: pd.DataFrame, columns: list[tuple[str, str]], heigh
     if not rows:
         return empty_state()
     s = pd.DataFrame(rows)
+    _fill = PALETTE["primary"]
     fig = go.Figure(go.Bar(
         x=s["mean"], y=s["label"], orientation="h",
-        marker_color=PALETTE["primary"],
+        marker_color=_fill,
         marker_line=dict(color=_PALETTE_DARK["primary"], width=1),
         error_x=dict(
             type="data", array=s["sd"], visible=True,
@@ -325,7 +349,7 @@ def likert_summary_strip(df: pd.DataFrame, columns: list[tuple[str, str]], heigh
         text=[f"{m:.2f} ± {sd:.2f}" for m, sd in zip(s["mean"], s["sd"])],
         textposition="inside",
         insidetextanchor="middle",
-        textfont=dict(color="black", size=12),
+        textfont=dict(color=_text_on(_fill), size=14),
         constraintext="inside",
         cliponaxis=False,
         customdata=np.stack([s["sd"].values, s["n"].values], axis=-1),
@@ -366,9 +390,10 @@ def mean_sd_by_group(
     agg["std"] = agg["std"].fillna(0.0)
     if sort_by_mean:
         agg = agg.sort_values("mean", ascending=False)
+    _fill = color or PALETTE["primary"]
     fig = go.Figure(go.Bar(
         x=agg[group_col].astype(str), y=agg["mean"],
-        marker_color=color or PALETTE["primary"],
+        marker_color=_fill,
         marker_line=dict(color=_PALETTE_DARK["primary"], width=1),
         error_y=dict(
             type="data", array=agg["std"], visible=True,
@@ -377,7 +402,7 @@ def mean_sd_by_group(
         text=[f"{m:.2f}±{sd:.2f}" for m, sd in zip(agg["mean"], agg["std"])],
         textposition="inside",
         insidetextanchor="middle",
-        textfont=dict(color="black", size=12),
+        textfont=dict(color=_text_on(_fill), size=14),
         constraintext="inside",
         cliponaxis=False,
         hovertemplate="%{x}<br>ממוצע: %{y:.2f}<br>סטיית תקן: %{error_y.array:.2f}<extra></extra>",
@@ -412,14 +437,15 @@ def rate_by_group(
     agg["pct"] = agg["mean"] * 100
     if sort_by_value:
         agg = agg.sort_values("pct", ascending=False)
+    _fill = color or PALETTE["secondary"]
     fig = go.Figure(go.Bar(
         x=agg[group_col].astype(str), y=agg["pct"],
-        marker_color=color or PALETTE["secondary"],
+        marker_color=_fill,
         marker_line=dict(color=_PALETTE_DARK["secondary"], width=1),
         text=[f"{p:.1f}{suffix}" for p in agg["pct"]],
         textposition="inside",
         insidetextanchor="middle",
-        textfont=dict(color="black", size=12),
+        textfont=dict(color=_text_on(_fill), size=14),
         constraintext="inside",
         cliponaxis=False,
         hovertemplate="%{x}<br>%{y:.1f}" + suffix + "<extra></extra>",
@@ -446,7 +472,7 @@ def donut(
     fig = go.Figure(go.Pie(
         labels=counts.index.astype(str), values=counts.values, hole=0.55,
         marker=dict(colors=colors),
-        textinfo="label+percent", textfont_size=14,
+        textinfo="label+percent", textfont_size=16,
     ))
     fig.update_layout(title=title)
     return _base_layout(fig, height=height)
@@ -578,7 +604,7 @@ def stacked_grouped_bar(
         text_auto=".0f",
     )
     fig.update_layout(title=title, yaxis_title="אחוז", yaxis_ticksuffix="%")
-    fig.update_traces(textposition="inside", textfont=dict(color="black", size=11))
+    fig.update_traces(textposition="inside", textfont=dict(color="white", size=13))
     return _base_layout(fig, height=height)
 
 
@@ -680,16 +706,17 @@ def district_stats_bar(
         if show_std else None
     )
 
+    _fill = PALETTE["primary"]
     fig = go.Figure(go.Bar(
         x=stats["district"].astype(str),
         y=stats["mean"],
         error_y=error_y,
-        marker_color=PALETTE["primary"],
+        marker_color=_fill,
         marker_line=dict(color=_PALETTE_DARK["primary"], width=1),
         text=[f"{m:.2f}±{s:.2f}" for m, s in zip(stats["mean"], stats["std"])],
         textposition="inside",
         insidetextanchor="middle",
-        textfont=dict(color="black", size=12),
+        textfont=dict(color=_text_on(_fill), size=14),
         constraintext="inside",
         cliponaxis=False,
         customdata=np.stack([stats["std"].values, stats["count"].values], axis=-1),
@@ -764,9 +791,11 @@ def district_comparison_grouped(
     )
     fig.update_traces(
         textposition="inside", insidetextanchor="middle",
-        textfont=dict(color="black", size=11),
+        textfont=dict(size=13),
         constraintext="inside", cliponaxis=False,
     )
+    for trace in fig.data:
+        trace.textfont = dict(color=_text_on(getattr(trace.marker, "color", "")), size=13)
     fig.update_layout(title=title or "השוואת מדדים לפי מחוזות (ממוצע ± סטיית תקן)")
     fig.update_yaxes(title="ממוצע ± סטיית תקן", range=[0, 7.0])
     fig.update_xaxes(title="")
@@ -810,28 +839,30 @@ def district_trial_flow(df: pd.DataFrame, district_col: str = "mahoz_short", hei
     result_df = pd.DataFrame(data).sort_values("total", ascending=False)
 
     fig = go.Figure()
+    _accent = PALETTE["accent"]
+    _secondary = PALETTE["secondary"]
     fig.add_trace(go.Bar(
         x=result_df["מחוז"], y=result_df["לא ביקשו להישפט"],
-        name="לא ביקשו להישפט", marker_color=PALETTE["accent"],
+        name="לא ביקשו להישפט", marker_color=_accent,
         marker_line=dict(color=_PALETTE_DARK["accent"], width=1),
         text=result_df["לא ביקשו להישפט"], textposition="inside",
         insidetextanchor="middle",
-        textfont=dict(color="black", size=11),
+        textfont=dict(color=_text_on(_accent), size=13),
     ))
     fig.add_trace(go.Bar(
         x=result_df["מחוז"], y=result_df["ביקשו להישפט"],
-        name="ביקשו להישפט", marker_color=PALETTE["secondary"],
+        name="ביקשו להישפט", marker_color=_secondary,
         marker_line=dict(color=_PALETTE_DARK["secondary"], width=1),
         text=result_df["ביקשו להישפט"], textposition="inside",
         insidetextanchor="middle",
-        textfont=dict(color="black", size=11),
+        textfont=dict(color=_text_on(_secondary), size=13),
     ))
 
     annotations = [
         dict(x=row["מחוז"], y=row["total"] * 0.97, xref="x", yref="y",
              text=f"{row['trial_pct']:.0f}% הישפטות | n={row['total']}",
              showarrow=False, yanchor="top",
-             font=dict(size=11, color="#1a1a2e"),
+             font=dict(size=13, color="#1a1a2e"),
              bgcolor="rgba(255,255,255,0.85)",
              bordercolor="rgba(0,0,0,0.15)", borderwidth=1, borderpad=3)
         for _, row in result_df.iterrows()
@@ -900,14 +931,15 @@ def sector_outcomes_stack(df: pd.DataFrame, height: int = 340) -> go.Figure:
         sub = long[long["sector"] == sector]
         if sub.empty:
             continue
+        fill = sector_colors[sector]
         fig.add_trace(go.Bar(
             y=sub["outcome"], x=sub["pct"], orientation="h",
             name=sector,
-            marker_color=sector_colors[sector],
+            marker_color=fill,
             marker_line=dict(color=sector_outlines[sector], width=1),
             text=[f"{p:.0f}%  n={c}" if p >= 8 else "" for p, c in zip(sub["pct"], sub["count"])],
             textposition="inside", insidetextanchor="middle",
-            textfont=dict(color="black", size=11),
+            textfont=dict(color=_text_on(fill), size=13),
             constraintext="inside", cliponaxis=False,
             customdata=np.stack([sub["count"].values, sub["total"].values], axis=-1),
             hovertemplate=(
@@ -972,14 +1004,15 @@ def gender_outcomes_stack(df: pd.DataFrame, height: int = 340) -> go.Figure:
         sub = long[long["gender"] == gender]
         if sub.empty:
             continue
+        fill = gender_colors[gender]
         fig.add_trace(go.Bar(
             y=sub["outcome"], x=sub["pct"], orientation="h",
             name=gender,
-            marker_color=gender_colors[gender],
+            marker_color=fill,
             marker_line=dict(color=gender_outlines[gender], width=1),
             text=[f"{p:.0f}%  n={c}" if p >= 8 else "" for p, c in zip(sub["pct"], sub["count"])],
             textposition="inside", insidetextanchor="middle",
-            textfont=dict(color="black", size=11),
+            textfont=dict(color=_text_on(fill), size=13),
             constraintext="inside", cliponaxis=False,
             customdata=np.stack([sub["count"].values, sub["total"].values], axis=-1),
             hovertemplate=(

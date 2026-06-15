@@ -18,7 +18,6 @@ from utils.charts import (
     stacked_pct_bar,
     district_stats_bar,
     district_comparison_grouped,
-    district_trial_flow,
 )
 from utils.charts import kpi_card_html, get_common_kpis
 from utils.data_loader import likert_to_3band
@@ -98,7 +97,7 @@ fig = likert_summary_strip(
     height=280,
     )
 fig.update_traces(textfont_color='white')
-fig.update_layout(title=dict(text=""))
+fig.update_layout(title=dict(text="שביעות רצון מהתהליך ועידוד לנהיגה זהירה — ציון ממוצע ± סטיית תקן (1-5)"))
 st.plotly_chart(fig,use_container_width=True)
 
 c1, c2 = st.columns(2)
@@ -130,7 +129,21 @@ with c2:
         use_container_width=True,
     )
 
-render_insight("satisfaction", df)
+_sat_mean = df["process_satisfaction_num"].mean()
+_caution_mean = df["future_caution_num"].mean()
+_sat_str = f"{_sat_mean:.2f}/5" if pd.notna(_sat_mean) else "-"
+_caution_str = f"{_caution_mean:.2f}/5" if pd.notna(_caution_mean) else "-"
+st.markdown(
+    f"""
+    <div class='insight-box'>
+      <h4>💡 שביעות רצון מהתהליך והשפעה על נהיגה עתידית</h4>
+      <p>שני המדדים הללו תופסים שתי זוויות שונות של אותו תהליך: עד כמה החוויה הייתה נוחה ועד כמה היא הותירה השפעה התנהגותית. בולט הפער בין השניים — שביעות הרצון מהתהליך נמוכה יותר מהציון על עידוד לנהיגה זהירה, מה שמרמז שגם תהליך הנחווה כלא־ידידותי עדיין מצליח לשרת את המטרה ההרתעתית של מערכת האכיפה.</p>
+      <p>בחיתוך לפי מסלול × מגזר ניכר כי שביעות הרצון נמוכה במיוחד בקרב מבקשי ההישפטות בשני המגזרים — סימן לכך שהמפגש עם ההליך המשפטי עצמו, ולא רק עם הקנס, הוא נקודת הכאב המרכזית. עידוד לנהיגה זהירה, לעומת זאת, נשאר יציב יחסית בין הקבוצות, כלומר המסר ההרתעתי מועבר באופן רוחבי גם כאשר התהליך עצמו אינו מספק.</p>
+      <p class='live-stat'>📊 מהמדגם המסונן הנוכחי: שביעות רצון ממוצעת: {_sat_str} | עידוד לנהיגה זהירה: {_caution_str}</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # =========================================================
@@ -221,7 +234,7 @@ if len(rec):
         fig2.update_traces(texttemplate="%{text}%", textposition="inside",
                             insidetextanchor="middle",
                             constraintext="inside", cliponaxis=False,
-                            textfont=dict(color="white", size=11))
+                            textfont=dict(color="white", size=13))
         fig2.update_layout(template="plotly_white", height=480,
                             paper_bgcolor="white", plot_bgcolor="white",
                             font=dict(color="black"),
@@ -239,6 +252,7 @@ else:
     st.plotly_chart(empty_state(), use_container_width=True)
 
 render_insight("friend_recommendation", df)
+render_insight("satisfaction", df)
 
 
 # =========================================================
@@ -249,16 +263,17 @@ st.markdown("<div class='section-header'>3. שביעות רצון לפי מחו�
 if "mahoz_short" in df.columns and df["mahoz_short"].notna().any():
     c1, c2 = st.columns(2)
     with c1:
+        st.plotly_chart(
             district_stats_bar(df, "process_satisfaction_num", title="שביעות רצון מהתהליך — לפי מחוז"),
             use_container_width=True,
-    
+        )
     with c2:
         st.plotly_chart(
             district_stats_bar(df, "future_caution_num", title="עידוד לנהיגה זהירה — לפי מחוז"),
             use_container_width=True,
         )
 
-    st.plotly_chart(    
+    st.plotly_chart(
         district_comparison_grouped(
             df,
             numeric_cols=[
@@ -266,14 +281,27 @@ if "mahoz_short" in df.columns and df["mahoz_short"].notna().any():
                 ("future_caution_num", "עידוד לזהירות"),
             ],
             title="השוואת שביעות רצון ועידוד לזהירות לפי מחוזות (ממוצע ± סטיית תקן)"
-            
         ),
         use_container_width=True,
     )
 
-    st.plotly_chart(
-        district_trial_flow(df),
-        use_container_width=True,
+    _sat_by_d = df.dropna(subset=["mahoz_short", "process_satisfaction_num"]).groupby("mahoz_short")["process_satisfaction_num"].mean()
+    if len(_sat_by_d) >= 2:
+        _max_d, _min_d = _sat_by_d.idxmax(), _sat_by_d.idxmin()
+        _live = f"שביעות רצון גבוהה ביותר: {_max_d} ({_sat_by_d.max():.2f}/5) | נמוכה ביותר: {_min_d} ({_sat_by_d.min():.2f}/5) | פער: {(_sat_by_d.max() - _sat_by_d.min()):.2f} נקודות"
+    else:
+        _live = None
+    _live_html = f"<p class='live-stat'>📊 מהמדגם המסונן הנוכחי: {_live}</p>" if _live else ""
+    st.markdown(
+        f"""
+        <div class='insight-box'>
+          <h4>💡 מה למדנו מהחיתוך הגיאוגרפי</h4>
+          <p>הפיזור בין המחוזות בשני המדדים — שביעות רצון מהתהליך ועידוד לנהיגה זהירה — נשאר מצומצם יחסית לפערים שראינו לפי מסלול ולפי מגזר. כלומר, מיקום גיאוגרפי איננו הגורם הדומיננטי בחוויית התהליך; הגורמים החזקים יותר הם זהות הקבוצה (יהודים/ערבים) והבחירה האם להישפט או לשלם.</p>
+          <p>עם זאת, נראים מחוזות בודדים המציגים סטייה — שביעות רצון גבוהה או נמוכה מהממוצע — ושווה לבחון אם הם משקפים שונות בניהול ההליך, בהיקף האכיפה או באוכלוסייה הגרה במחוז. בקריאת ההשוואה חשוב לזכור שגודל המדגם משתנה בין מחוזות, וקבוצות עם n קטן הוצגו עם אזהרה.</p>
+          {_live_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 else:
     st.info("נתוני המחוזות לא זמינים בסינון הנוכחי")
