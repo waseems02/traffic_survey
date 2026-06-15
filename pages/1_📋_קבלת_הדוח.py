@@ -9,6 +9,7 @@ import streamlit as st
 
 from utils.charts import (
     PALETTE,
+    YESNO_COLORS,
     _text_on,
     empty_state,
     grouped_bar,
@@ -79,14 +80,24 @@ with k4:
     )
 
 
-# =========================================================
-# 1. כמות הדוחות שקיבלו (PPT 4-5)
-# =========================================================
-st.markdown("<div class='section-header'>1. כמות הדוחות שקיבלו</div>", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class='insight-box'>
+      <h4>📖 על מה העמוד הזה</h4>
+      <p>מסע מקבל הדוח מתחיל בנקודת הקבלה — איך הדוח הגיע, ממי, מתי, ועל איזו עבירה. ההבדלים בנקודות אלו בין קבוצות (מגזר, גיל, מסלול) קובעים את נקודת הפתיחה לחוויה הסובייקטיבית של התהליך כולו. בעמוד זה מוצגים מאפייני הרקע: מספר הדוחות לנהג, שנת הדוח, סוגי העבירות הנפוצים, מקור הדוח והערוץ שדרכו הגיע לאזרח.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-c1, c2 = st.columns([1, 1.4])
 
-with c1:
+# =========================================================
+# 1. מספר הדוחות לנהג (PPT 4-5)
+# =========================================================
+st.markdown("<div class='section-header'>1. מספר הדוחות לנהג</div>", unsafe_allow_html=True)
+
+_, mid, _ = st.columns([1, 2, 1])
+with mid:
     counts = df["report_count_bin"].dropna().value_counts(normalize=True) * 100
     counts = counts.reset_index()
     counts.columns = ["category", "pct"]
@@ -101,47 +112,14 @@ with c1:
                       font=dict(color="black"),
                       margin=dict(l=135, r=40, t=90, b=80),
                       autosize=False,
-                      title="התפלגות כמות דוחות שהתקבלה",title_font_color="black")
+                      title="התפלגות מספר הדוחות לנהג",title_font_color="black")
     fig.update_traces(textposition="inside", insidetextanchor="middle",
                       constraintext="inside", cliponaxis=False)
-    # px.bar maps category→color; pick contrast color per trace from its marker.
     for tr in fig.data:
         tr.textfont = dict(color=_text_on(tr.marker.color))
     fig.update_yaxes(title="pct", ticksuffix="%", automargin=True,tickfont=dict(color="black"))
     fig.update_xaxes(title="", automargin=True,tickfont=dict(color="black"))
     st.plotly_chart(fig, use_container_width=True)
-
-with c2:
-    avg_rows = []
-    for label, sub in [("ביקשו להישפט", df[df["requested_trial"]]),
-                       ("שילמו קנס / אחר", df[~df["requested_trial"]])]:
-        for m in ["מגזר יהודי", "מגזר ערבי"]:
-            sub_m = sub[sub["migzar"] == m]
-            n = (sub_m["report_count_bin"] == "קיבלתי יותר מדו\"ח אחד").sum()
-            tot = len(sub_m)
-            avg_rows.append({"מסלול": label, "מגזר": m,
-                             "% בעלי 2+ דוחות": (n / tot * 100) if tot else 0,
-                             "n": tot})
-    avg_df = pd.DataFrame(avg_rows)
-    fig2 = px.bar(
-        avg_df, x="מגזר", y="% בעלי 2+ דוחות", color="מסלול", barmode="group",
-        color_discrete_map={"ביקשו להישפט": PALETTE["secondary"], "שילמו קנס / אחר": PALETTE["accent"]},
-        text="% בעלי 2+ דוחות",
-    )
-    fig2.update_traces(texttemplate="%{text:.1f}%", textposition="inside",
-                       insidetextanchor="middle",
-                       constraintext="inside", cliponaxis=False)
-    for tr in fig2.data:
-        tr.textfont = dict(color=_text_on(tr.marker.color))
-    fig2.update_layout(height=380, template="plotly_white",
-                       paper_bgcolor="white", plot_bgcolor="white",
-                       font=dict(color="black"),
-                       margin=dict(l=135, r=40, t=90, b=80),
-                       autosize=False,
-                       title="שיעור בעלי 2+ דוחות — מסלול × מגזר",title_font_color="black", legend_title="מסלול", legend=dict(font=dict(color="black")))
-    fig2.update_yaxes(ticksuffix="%", title="", automargin=True,tickfont=dict(color="black"))
-    fig2.update_xaxes(automargin=True,title="", tickfont=dict(color="black"))
-    st.plotly_chart(fig2, use_container_width=True)
 
 render_insight("report_count", df)
 
@@ -239,21 +217,17 @@ with c2:
     s.columns = ["category", "pct"]
     s["pct"] = s["pct"] * 100
     fig = px.bar(s, x="pct", y="category", orientation="h",
-                  color="pct", color_continuous_scale=["#cfe0f5", "#003366"],
                   text=[f"{v:.1f}%" for v in s["pct"]])
+    fig.update_traces(marker_color=PALETTE["secondary"], marker_line=dict(color="white", width=1))
     fig.update_layout(showlegend=False, height=380, template="plotly_white",
                       paper_bgcolor="white", plot_bgcolor="white",
                       font=dict(color="black"),
                       margin=dict(l=135, r=40, t=90, b=80),
                       autosize=False,
-                      title="אופן קבלת הדוח",title_font_color="black", coloraxis_showscale=False)
-    # Colorscale produces a per-bar fill; pick text color per-bar from the pct.
-    pct_max, pct_min = float(s["pct"].max()), float(s["pct"].min())
-    span = max(pct_max - pct_min, 1e-9)
-    per_text = ["white" if (p - pct_min) / span > 0.5 else "black" for p in s["pct"]]
+                      title="אופן קבלת הדוח",title_font_color="black")
     fig.update_traces(textposition="inside", insidetextanchor="middle",
                       constraintext="inside", cliponaxis=False,
-                      textfont=dict(color=per_text))
+                      textfont=dict(color=_text_on(PALETTE["secondary"])))
     fig.update_xaxes(dict(tickfont=dict(color="black"), ticksuffix="%", title="", range=[0, max(s["pct"].max() * 1.2, 10)], automargin=True))
     fig.update_yaxes(dict(tickfont=dict(color="black"), title="", autorange="reversed", automargin=True,showgrid=True, gridcolor="black",gridwidth=1.2))
     st.plotly_chart(fig, use_container_width=True)
@@ -270,5 +244,58 @@ st.plotly_chart(
     use_container_width=True,
 )
 
+c3, c4 = st.columns(2)
+with c3:
+    st.plotly_chart(
+        stacked_pct_bar(
+            df.dropna(subset=["report_source", "migzar"]),
+            group_col="migzar",
+            value_col="report_source",
+            category_order=["משטרת ישראל", "עירייה / רשות מוניציפאלית", "לא זוכר/ת"],
+            color_map={
+                "משטרת ישראל": PALETTE["primary"],
+                "עירייה / רשות מוניציפאלית": PALETTE["secondary"],
+                "לא זוכר/ת": PALETTE["accent"],
+            },
+            title="מקור הדוח לפי מגזר",
+        ),
+        use_container_width=True,
+    )
+with c4:
+    st.plotly_chart(
+        stacked_pct_bar(
+            df.dropna(subset=["report_channel_bin", "report_year_bin"]),
+            group_col="report_year_bin",
+            value_col="report_channel_bin",
+            color_map={"פיזית משוטר בשטח": PALETTE["primary"], "כל השאר": PALETTE["accent"]},
+            title="אופן הקבלה לפי שנת הדוח",
+        ),
+        use_container_width=True,
+    )
+
+_pay_base = df[~df["requested_trial"]].dropna(subset=["report_channel_bin", "paid_fine_actual"])
+st.plotly_chart(
+    stacked_pct_bar(
+        _pay_base,
+        group_col="report_channel_bin",
+        value_col="paid_fine_actual",
+        category_order=["כן", "לא"],
+        color_map=YESNO_COLORS,
+        title="תשלום הקנס בפועל לפי אופן הקבלה (בקרב מי שלא ביקש להישפט)",
+    ),
+    use_container_width=True,
+)
+
 render_insight("report_source", df)
 render_insight("report_channel", df)
+
+
+st.markdown(
+    """
+    <div class='insight-box'>
+      <h4>🧭 סיכום העמוד</h4>
+      <p>ההתחלה אינה אחידה. מרבית הנהגים מקבלים דוח אחד בלבד, רובם בשנתיים האחרונות, ומרבית הדוחות עוסקים בשלוש עבירות מרכזיות: מהירות, שימוש בטלפון ונסיעה בנת"צ. אבל הערוץ שדרכו הדוח הגיע משתנה — ובאופן מובהק, ערוץ הקבלה קשור גם להמשך התהליך: דוחות שהתקבלו פיזית משוטר מובילים לשיעור תשלום נמוך יותר מדוחות שהגיעו בדואר. כבר בנקודת הפתיחה רואים שהמסע אינו אחיד, ושערוץ ההגעה של הדוח משפיע על מה שקורה אחר כך.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)

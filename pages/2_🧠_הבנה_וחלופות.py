@@ -14,6 +14,7 @@ from utils.charts import (
     LIKERT_3BAND_COLORS,
     LIKERT_3BAND_ORDER,
     YESNO_COLORS,
+    SECTOR_COLORS,
     donut,
     empty_state,
     horizontal_pct_bar,
@@ -82,6 +83,17 @@ with k4:
                       sub="ציון ממוצע", std_dev=sat_std_str),
         unsafe_allow_html=True,
     )
+
+
+st.markdown(
+    """
+    <div class='insight-box'>
+      <h4>📖 על מה העמוד הזה</h4>
+      <p>בין רגע קבלת הדוח לבין ההחלטה איך לפעול עוברת חלון הזמן הקצר שבו האזרח צריך להבין מה קרה ואילו אפשרויות עומדות בפניו. עמוד זה בוחן את שלב המודעות וההחלטה: רמת ההבנה של העבירה ושל אפשרויות הפעולה, מודעות לחלופות (המרה לאזהרה, בקשה להישפט), הצורך בליווי משפטי, החסמים לבקשת המרה, ולבסוף — תשלום הקנס בפועל. כאן מתבררת השאלה האם המסלול שנבחר היה החלטה מודעת או "ברירת מחדל" בהיעדר מידע.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # =========================================================
@@ -254,7 +266,7 @@ with c1:
         conv_df = pd.DataFrame(rows)
         fig = px.bar(conv_df, x="מגזר", y="שיעור שביקשו המרה (%)",
                       color="מגזר",
-                      color_discrete_sequence=[PALETTE["primary"], PALETTE["accent"]],
+                      color_discrete_map=SECTOR_COLORS,
                       text=[f"{v:.1f}%" for v in conv_df['שיעור שביקשו המרה (%)']])
         fig.update_traces(textposition="inside", insidetextanchor="middle",
                           constraintext="inside", cliponaxis=False)
@@ -326,13 +338,13 @@ if rows:
     pay_df = pd.DataFrame(rows)
     fig = go.Figure()
     fig.add_trace(go.Bar(name="כן — שילמו", x=pay_df["מגזר"], y=pay_df["% שילמו"],
-                          marker_color=PALETTE["accent"],
+                          marker_color=YESNO_COLORS["כן"],
                           text=[f"{v:.1f}%" for v in pay_df["% שילמו"]],
                           textposition="inside", insidetextanchor="middle",
                           constraintext="inside", cliponaxis=False,
                           textfont=dict(color="white", size=14)))
     fig.add_trace(go.Bar(name="לא — לא שילמו", x=pay_df["מגזר"], y=pay_df["% לא שילמו"],
-                          marker_color=PALETTE["danger"],
+                          marker_color=YESNO_COLORS["לא"],
                           text=[f"{v:.1f}%" for v in pay_df["% לא שילמו"]],
                           textposition="inside", insidetextanchor="middle",
                           constraintext="inside", cliponaxis=False,
@@ -353,3 +365,14 @@ else:
     st.plotly_chart(empty_state(), use_container_width=True)
 
 render_insight("fine_payment", df)
+
+
+st.markdown(
+    """
+    <div class='insight-box'>
+      <h4>🧭 סיכום העמוד</h4>
+      <p>חוסר המודעות הוא הסיפור המרכזי כאן. חלקים נרחבים מהאזרחים — במיוחד מי שלא ביקשו להישפט — לא ידעו כלל על קיומן של החלופות, ובכך ההחלטה הראשונית שלהם לא הייתה החלטה מודעת אלא ברירת מחדל. הצורך הנתפס בעורך דין עולה בעיקר בקרב מבקשי ההישפטות, ובמיוחד במגזר הערבי, מה שמרמז שההסתבכות עם המערכת המשפטית מורגשת כאתגר אמיתי שדורש ליווי. בסופו של דבר, מרבית הנהגים שילמו את הקנס, אך הסיבות מגוונות — מתחושת חוסר טעם בהליך ועד חששות בירוקרטיים-כלכליים. הרפורמה צריכה להבליט את החלופות באופן אקטיבי ("מסך חובה" בתהליך הדיגיטלי), ולא להניח שהאזרח יודע על קיומן.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)

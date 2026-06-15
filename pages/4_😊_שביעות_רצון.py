@@ -13,6 +13,8 @@ from utils.charts import (
     _text_on,
     LIKERT_3BAND_COLORS,
     LIKERT_3BAND_ORDER,
+    TRIAL_COLORS,
+    DEMOGRAPHIC_SEQUENCE,
     empty_state,
     likert_summary_strip,
     stacked_pct_bar,
@@ -81,6 +83,17 @@ with k4:
                       sub="ציון ממוצע", std_dev=sat_std_str),
         unsafe_allow_html=True,
     )
+
+
+st.markdown(
+    """
+    <div class='insight-box'>
+      <h4>📖 על מה העמוד הזה</h4>
+      <p>כעת אנחנו בוחנים את התחושה בסוף הדרך: עד כמה האזרחים מרוצים מהתהליך שעברו, האם הם חשים שהוא עודד אותם לזהירות עתידית, ומה הם היו ממליצים לחבר שקיבל דוח. ההמלצה לחבר מהווה מדד עקיף לאיכות החוויה — האם הם רואים בתהליך משהו שכדאי לעבור, או משהו שכדאי להימנע ממנו ולשלם כמה שיותר מהר. סעיף נוסף סוקר פערים בין מחוזות שונים, כדי לבחון האם המיקום הגיאוגרפי משפיע על שביעות הרצון.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # =========================================================
@@ -173,7 +186,7 @@ if len(rec):
         fig = px.bar(
             rec_df, y="", x="אחוז", color="מסלול", barmode="group",
             orientation="h",
-            color_discrete_map={"ביקשו להישפט": PALETTE["secondary"], "שילמו קנס / אחר": PALETTE["accent"]},
+            color_discrete_map=TRIAL_COLORS,
             category_orders={"": order},
             text=rec_df["אחוז"].round(1),
         )
@@ -228,7 +241,7 @@ if len(rec):
         rec_df2 = pd.DataFrame(rows2)
         fig2 = px.bar(
             rec_df2, x="קבוצה", y="אחוז", color="המלצה", barmode="stack",
-            color_discrete_sequence=px.colors.qualitative.Set2,
+            color_discrete_sequence=DEMOGRAPHIC_SEQUENCE,
             text=rec_df2["אחוז"].round(1),
         )
         fig2.update_traces(texttemplate="%{text}%", textposition="inside",
@@ -305,3 +318,14 @@ if "mahoz_short" in df.columns and df["mahoz_short"].notna().any():
     )
 else:
     st.info("נתוני המחוזות לא זמינים בסינון הנוכחי")
+
+
+st.markdown(
+    """
+    <div class='insight-box'>
+      <h4>🧭 סיכום העמוד</h4>
+      <p>שביעות הרצון מהתהליך נמוכה במיוחד בקרב מבקשי ההישפטות בשני המגזרים — סימן ברור לכך שההליך המשפטי, ולא רק עצם הקנס, הוא מקור הכאב. עם זאת, ההרתעה עובדת: עידוד לנהיגה זהירה נשמר יחסית יציב בכל הקבוצות, גם אצל מי שלא היה מרוצה מהתהליך. ההמלצות לחבר משקפות שני קולות נפרדים — מי שוויתרו על ההליך ממליצים "לשלם ולשכוח", ואילו מי שעברו את ההליך ממליצים לפנות לייעוץ ולדרוש את יומם בבית המשפט. ההבדל הזה הוא לב הרפורמה: להפוך את המסלול המשפטי לאפשרות אמיתית — ברורה, נגישה, ובעלת ערך — ולא לתהליך שמרתיע מראש.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)

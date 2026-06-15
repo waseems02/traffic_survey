@@ -23,19 +23,63 @@ _PALETTE_DARK = dict(PALETTE)
 
 # Trial/no-trial canonical colors used everywhere
 TRIAL_COLORS = {
-    "ביקשו להישפט": "#0066cc",
-    "שילמו קנס / אחר": "#00cc99",
-    "לא ביקשו להישפט": "#00cc99",
+    "ביקשו להישפט": PALETTE["secondary"],
+    "שילמו קנס / אחר": PALETTE["accent"],
+    "לא ביקשו להישפט": PALETTE["accent"],
 }
 
 LIKERT_3BAND_ORDER = ["במידה מועטה", "במידה בינונית", "במידה רבה"]
 LIKERT_3BAND_COLORS = {
-    "במידה מועטה": "#cc3333",
-    "במידה בינונית": "#ffcc00",
-    "במידה רבה": "#0066cc",
+    "במידה מועטה": PALETTE["danger"],
+    "במידה בינונית": PALETTE["warn"],
+    "במידה רבה": PALETTE["secondary"],
 }
 
-YESNO_COLORS = {"כן": "#0066cc", "לא": "#cc3333"}
+YESNO_COLORS = {"כן": PALETTE["secondary"], "לא": PALETTE["danger"]}
+
+# Sector — used on every page
+SECTOR_COLORS = {
+    "מגזר יהודי": PALETTE["secondary"],
+    "מגזר ערבי": PALETTE["accent"],
+    "לא ידוע": PALETTE["muted"],
+}
+
+GENDER_COLORS = {
+    "גבר": PALETTE["primary"],
+    "אישה": PALETTE["accent"],
+}
+
+# 3-level ordinal: "balance vs prosecution", and similar (כלל לא → באופן חלקי → באופן מלא)
+BALANCE_COLORS = {
+    "כלל לא": PALETTE["danger"],
+    "באופן חלקי": PALETTE["warn"],
+    "באופן מלא": PALETTE["accent"],
+}
+
+# Awareness (3 ordered states from full awareness to none)
+AWARENESS_COLORS = {
+    "כן, ידעתי": PALETTE["accent"],
+    "ידעתי באופן חלקי": PALETTE["warn"],
+    "לא ידעתי": PALETTE["danger"],
+}
+
+# Hearing status (6 distinct outcomes; uses full palette in fixed order)
+HEARING_STATUS_COLORS = {
+    "כן, בנוכחותי": PALETTE["primary"],
+    "כן, אבל לא בנוכחותי (עו\"ד ייצג אותי)": PALETTE["secondary"],
+    "כן, אבל לא התייצבתי (לא ידעתי על תאריך הדיון או בחרתי לא להתייצב)": PALETTE["accent"],
+    "טרם נקבע דיון": PALETTE["warn"],
+    "לא נקבע דיון וההליך התבטל": PALETTE["danger"],
+    "אין מענה": PALETTE["muted"],
+}
+
+# Sequence for any demographic / multi-category chart (districts, age bands, education, etc.)
+DEMOGRAPHIC_SEQUENCE = [
+    PALETTE["primary"], PALETTE["secondary"], PALETTE["accent"],
+    PALETTE["warn"], PALETTE["danger"], PALETTE["muted"],
+]
+
+NO_ANSWER_COLOR = PALETTE["muted"]
 
 
 def _text_on(color: str) -> str:
@@ -552,36 +596,48 @@ def heatmap_crosstab(df: pd.DataFrame, x: str, y: str, normalize: Optional[str] 
 
 
 def sankey_trial_flow(df: pd.DataFrame, height: int = 460) -> go.Figure:
+    """Simple horizontal bar of the four final outcomes, color-coded by track."""
     if df.empty:
         return empty_state()
     total = len(df)
-    no_trial = int((~df["requested_trial"]).sum())
-    trial = int(df["requested_trial"].sum())
     paid = int(((~df["requested_trial"]) & (df["paid_fine_actual"] == "כן")).sum())
     not_paid = int(((~df["requested_trial"]) & (df["paid_fine_actual"] == "לא")).sum())
     held = int((df["requested_trial"] & (df["hearing_held_bin"] == "היה דיון בפועל")).sum())
     not_held = int((df["requested_trial"] & (df["hearing_held_bin"] == "לא היה")).sum())
-    labels = ["סך הכל",
-              "לא ביקשו להישפט", "ביקשו להישפט",
-              "שילמו קנס", "לא שילמו",
-              "התקיים דיון", "לא התקיים דיון"]
-    colors = [PALETTE["primary"],
-              PALETTE["accent"], PALETTE["secondary"],
-              "#7bc7a8", "#cc3333",
-              "#4a8fd0", "#cc7a52"]
-    fig = go.Figure(go.Sankey(
-        arrangement="snap",
-        node=dict(label=labels, pad=18, thickness=22, color=colors, line=dict(color="white", width=1)),
-        link=dict(
-            source=[0, 0, 1, 1, 2, 2],
-            target=[1, 2, 3, 4, 5, 6],
-            value=[no_trial, trial, paid, not_paid, held, not_held],
-            color=["rgba(0,204,153,0.35)", "rgba(0,102,204,0.35)",
-                   "rgba(123,199,168,0.45)", "rgba(204,51,51,0.45)",
-                   "rgba(74,143,208,0.45)", "rgba(204,122,82,0.45)"],
-        ),
+
+    rows = [
+        ("שילמו את הקנס", paid, "לא ביקשו להישפט", PALETTE["accent"]),
+        ("לא שילמו את הקנס", not_paid, "לא ביקשו להישפט", PALETTE["accent"]),
+        ("התקיים דיון", held, "ביקשו להישפט", PALETTE["secondary"]),
+        ("לא התקיים דיון", not_held, "ביקשו להישפט", PALETTE["secondary"]),
+    ]
+    rows.sort(key=lambda r: r[1], reverse=True)
+    labels = [r[0] for r in rows]
+    values = [r[1] for r in rows]
+    tracks = [r[2] for r in rows]
+    colors = [r[3] for r in rows]
+    pcts = [(v / total * 100) if total else 0 for v in values]
+
+    fig = go.Figure(go.Bar(
+        x=values,
+        y=labels,
+        orientation="h",
+        marker=dict(color=colors, line=dict(color="white", width=1)),
+        text=[f"{v:,} ({p:.1f}%)" for v, p in zip(values, pcts)],
+        textposition="inside",
+        insidetextanchor="middle",
+        textfont=dict(color="white", size=16),
+        customdata=tracks,
+        hovertemplate="%{y}<br>מסלול: %{customdata}<br>%{x:,} משיבים<extra></extra>",
+        cliponaxis=False,
+        constraintext="inside",
     ))
-    fig.update_layout(title=f"מסע הנהג מקבלת הדוח ועד תוצאת התהליך (סך כל: {total})")
+    fig.update_layout(
+        title=f"תוצאות התהליך — סך הכל {total:,} משיבים",
+        showlegend=False,
+    )
+    fig.update_xaxes(title="", showticklabels=False, range=[0, max(values) * 1.05 if values else 1])
+    fig.update_yaxes(title="", autorange="reversed")
     return _base_layout(fig, height=height)
 
 

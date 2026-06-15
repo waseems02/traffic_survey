@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from utils.charts import PALETTE, _text_on, empty_state, heatmap_crosstab
+from utils.charts import PALETTE, DEMOGRAPHIC_SEQUENCE, _text_on, empty_state, heatmap_crosstab
 from utils.charts import kpi_card_html, get_common_kpis
 from utils.filters import init_global_filters, require_data
 
@@ -79,10 +79,21 @@ with k5:
     sat_str = f"{kpis['sat_avg']:.2f} / 5" if kpis['sat_avg'] is not None else "-"
     sat_std_str = f"{kpis['sat_std']:.2f}" if kpis['sat_std'] is not None else "-"
     st.markdown(
-        kpi_card_html("שביעות רצון מהתהליך", sat_str, PALETTE["danger"],
+        kpi_card_html("שביעות רצון מהתהליך", sat_str, PALETTE["warn"],
                       sub="ציון ממוצע", std_dev=sat_std_str),
         unsafe_allow_html=True,
     )
+
+
+st.markdown(
+    """
+    <div class='insight-box'>
+      <h4>📖 על מה העמוד הזה</h4>
+      <p>בעמודים הקודמים החיתוכים נבחרו מראש — לפי מגזר, מסלול, מגדר וכדומה. כאן ניתן ליצור באופן חופשי הצלבה דינמית בין כל שני משתנים בנתונים, ולחקור דפוסים נוספים שלא הופיעו בדוח הראשי: למשל, האם הכנסה משפיעה על מודעות לחלופות, או האם השכלה קשורה לבחירה במסלול. מנוע ההצלבה כולל מבחן Chi-square אוטומטי לזיהוי קשרים מובהקים סטטיסטית בין המשתנים שנבחרו.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # Curated lists of canonical Hebrew-labeled columns to expose
@@ -168,7 +179,7 @@ ct_long = ct_pct.reset_index().melt(id_vars=x_col, var_name=y_label, value_name=
 
 fig = px.bar(
     ct_long, x=x_col, y="אחוז", color=y_label, barmode="stack",
-    color_discrete_sequence=px.colors.qualitative.Set2,
+    color_discrete_sequence=DEMOGRAPHIC_SEQUENCE,
     text=ct_long["אחוז"].round(1),
 )
 fig.update_traces(texttemplate="%{text}%", textposition="inside",
@@ -227,6 +238,17 @@ st.markdown(
     """
     <div class='muted-note'>
       💡 טיפ: הסינון הגלובלי בצד עדיין פעיל — הצלבה תתבצע רק על המשיבים המסוננים. שנה פילטרים כדי לבחון דפוסים בתת-מדגמים שונים.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+st.markdown(
+    """
+    <div class='insight-box'>
+      <h4>🧭 סיכום העמוד</h4>
+      <p>מנוע ההצלבה הוא הכלי שמאפשר להתעמק בקשרים בלתי-צפויים שעלולים להיחבא בנתונים. השתמשו בו לזיהוי תת-קבוצות שבהן הפערים בולטים — למשל, האם רמת הכנסה משפיעה על המודעות לחלופות, או האם הבדלי המחוז מעידים על שונות באכיפה. תוצאת ה-Chi-square מהווה אינדיקציה ראשונית בלבד למובהקות סטטיסטית; פערים תוכניים משמעותיים יכולים להופיע גם בלא-מובהק (n קטן), ולחילופין מובהקות סטטיסטית במדגם גדול אינה מעידה בהכרח על משמעות תוכנית. הצלבות אלו יכולות להזין השערות חדשות לגבי מקורות הפערים בדוח, ולסייע בכוונון הרפורמה.</p>
     </div>
     """,
     unsafe_allow_html=True,

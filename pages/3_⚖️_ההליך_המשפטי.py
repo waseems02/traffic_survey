@@ -12,6 +12,8 @@ from utils.charts import (
     _text_on,
     LIKERT_3BAND_COLORS,
     LIKERT_3BAND_ORDER,
+    BALANCE_COLORS,
+    HEARING_STATUS_COLORS,
     donut,
     empty_state,
     kpi_card_html,
@@ -68,7 +70,7 @@ else:
 k1, k2, k3, k4 = st.columns(4)
 with k1:
     st.markdown(
-        kpi_card_html("סך כל מבקשי ההישפט בסינון", f"{trial_count:,}", PALETTE["primary"],
+        kpi_card_html("סך המבקשים להישפט", f"{trial_count:,}", PALETTE["primary"],
                       sub="מתוך המסוננים"),
         unsafe_allow_html=True,
     )
@@ -89,9 +91,20 @@ with k4:
     sat_std_str = f"{sat_std:.2f}" if sat_avg is not None else ""
     st.markdown(
         kpi_card_html("שביעות רצון מהתהליך", sat_str, PALETTE["warn"],
-                      sub="ציון ממוצע", std_dev=sat_std_str),
+                      sub="ציון ממוצע בקרב מבקשי ההישפטות בלבד", std_dev=sat_std_str),
         unsafe_allow_html=True,
     )
+
+
+st.markdown(
+    """
+    <div class='insight-box'>
+      <h4>📖 על מה העמוד הזה</h4>
+      <p>החלק הזה בדוח עוסק רק במבקשי ההישפטות — הקבוצה הקטנה יחסית שבחרה להתעמת עם המערכת במקום לשלם. כאן מתבררות שאלות הליבה של הרפורמה: עד כמה תהליך הגשת הבקשה ברור, האם הנגישות לראיות מאפשרת ניהול עניין הוגן, האם הדיון אכן מתקיים בכלל, מה תחושת הנשפט מול השופט והתביעה, והאם פסק הדין מובן והוגן בעיניו. הפערים בין מגזרים — כולל בייצוג ע"י עו"ד ובשיעור הדיונים שאכן התקיימו — בולטים במיוחד בחלק זה.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # =========================================================
 # 1. בהירות התהליך + מעקב סטטוס
@@ -114,7 +127,7 @@ with c1:
     st.plotly_chart(fig, use_container_width=True)
 
 with c2:
-        fig_donut=donut(
+        fig_donut = donut(
             req,
             "tracked_status",
             title="האם ידעו לעקוב אחר הסטטוס?",
@@ -124,10 +137,14 @@ with c2:
                 "לא ידעתי איך לעקוב": PALETTE["danger"],
             },
         )
-        fig_donut.update_layout(height=560,
-                                margin=dict(l=10, r=10, t=60, b=80)) 
-    
-    # 3. Pass the resized figure to Streamlit
+        # Give the circle as much room as possible: tight margins, no legend
+        # (labels already appear on each slice via textinfo="label+percent").
+        fig_donut.update_traces(domain=dict(x=[0, 1], y=[0, 1]))
+        fig_donut.update_layout(
+            margin=dict(l=10, r=10, t=40, b=10),
+            showlegend=False,
+            height=500,
+        )
         st.plotly_chart(fig_donut, use_container_width=True)
     
 
@@ -227,9 +244,12 @@ render_insight("evidence", df)
 
 st.markdown("<div class='section-header'>3. האם התקיים דיון בפועל</div>", unsafe_allow_html=True)
 
+_hearing = df.dropna(subset=["migzar"]).copy()
+_hearing["hearing_held"] = _hearing["hearing_held"].fillna("אין מענה")
+
 st.plotly_chart(
     stacked_pct_bar(
-        df.dropna(subset=["hearing_held"]),
+        _hearing,
         group_col="migzar",
         value_col="hearing_held",
         category_order=[
@@ -237,13 +257,10 @@ st.plotly_chart(
             "כן, אבל לא בנוכחותי (עו\"ד ייצג אותי)",
             "כן, אבל לא התייצבתי (לא ידעתי על תאריך הדיון או בחרתי לא להתייצב)",
             "טרם נקבע דיון",
+            "לא נקבע דיון וההליך התבטל",
+            "אין מענה",
         ],
-        color_map={
-            "כן, בנוכחותי": PALETTE["primary"],
-            "כן, אבל לא בנוכחותי (עו\"ד ייצג אותי)": PALETTE["secondary"],
-            "כן, אבל לא התייצבתי (לא ידעתי על תאריך הדיון או בחרתי לא להתייצב)": PALETTE["accent"],
-            "טרם נקבע דיון": PALETTE["warn"],
-        },
+        color_map=HEARING_STATUS_COLORS,
         title="האם התקיים דיון בפועל לפי מגזר",
     ),
     use_container_width=True,
@@ -287,17 +304,26 @@ render_insight("lawyer_repped", df)
 
 st.markdown("<div class='section-header'>5. יחס השופט ואיזון</div>", unsafe_allow_html=True)
 
-st.plotly_chart(
-    likert_summary_strip(
-        df,
-        columns=[
-            ("judge_fair_num", "יחס השופט (הוגן ומכבד)"),
-            ("judge_voice_num", "הזדמנות להשמיע גרסה"),
-        ],
-        height=260,
-    ),
-    use_container_width=True,
+_strip_fig = likert_summary_strip(
+    df,
+    columns=[
+        ("judge_fair_num", "יחס השופט (הוגן ומכבד)"),
+        ("judge_voice_num", "הזדמנות להשמיע גרסה"),
+    ],
+    height=300,
 )
+_strip_fig.update_layout(
+    title=dict(
+        text="יחס השופט והזדמנות להשמיע גרסה — ציון ממוצע (1-5)",
+        font=dict(color="black", size=18),
+        x=0.5,
+        xanchor="right",
+        y=0.95,
+        yanchor="top",
+    ),
+    margin=dict(l=135, r=40, t=80, b=40),
+)
+st.plotly_chart(_strip_fig, use_container_width=True)
 
 c1, c2 = st.columns(2)
 with c1:
@@ -310,7 +336,7 @@ with c1:
             value_col="likert_band",
             category_order=LIKERT_3BAND_ORDER,
             color_map=LIKERT_3BAND_COLORS,
-            show_mean=True,
+            #show_mean=True,
             mean_col="judge_fair_num",
             title="יחס השופט — לפי מגזר",
         ),
@@ -318,30 +344,18 @@ with c1:
     )
 
 with c2:
-    balance = df["balance_perception"].dropna().value_counts()
-    if len(balance):
-        balance_fills = [PALETTE["danger"], PALETTE["warn"], PALETTE["accent"]][:len(balance)]
-        fig = go.Figure(go.Bar(
-            x=balance.index, y=balance.values,
-            marker_color=balance_fills,
-            text=balance.values, textposition="inside",
-            constraintext="inside", cliponaxis=False,
-            insidetextanchor="middle",
-            textfont=dict(color=[_text_on(c) for c in balance_fills]),
-        ))
-        fig.update_layout(
-            template="plotly_white",
-            paper_bgcolor="white", plot_bgcolor="white",
-            font=dict(color="black"),
-            margin=dict(l=135, r=40, t=90, b=80),
-            autosize=False,
-            title="איזון מול התביעה/המשטרה", height=400,
-        )
-        fig.update_xaxes(automargin=True)
-        fig.update_yaxes(automargin=True)
-        st.plotly_chart(fig, use_container_width=True)
-
-render_insight("judge_perception", df)
+    balance_order = ["כלל לא", "באופן חלקי", "באופן מלא"]
+    st.plotly_chart(
+        stacked_pct_bar(
+            df.dropna(subset=["balance_perception", "migzar"]),
+            group_col="migzar",
+            value_col="balance_perception",
+            category_order=balance_order,
+            color_map=BALANCE_COLORS,
+            title="איזון מול התביעה/המשטרה — לפי מגזר",
+        ),
+        use_container_width=True,
+    )
 
 
 st.markdown("<div class='section-header'>6. הבנה והוגנות פסק הדין</div>", unsafe_allow_html=True)
@@ -367,6 +381,8 @@ for col, label, container in [
             ),
             use_container_width=True,
         )
+
+render_insight("judge_perception", df)
 
 
 st.markdown("<div class='section-header'>7. מה היו משנים בתהליך</div>", unsafe_allow_html=True)
@@ -444,3 +460,14 @@ if change_col:
             unsafe_allow_html=True)
 
 render_insight("what_to_change", df)
+
+
+st.markdown(
+    """
+    <div class='insight-box'>
+      <h4>🧭 סיכום העמוד</h4>
+      <p>ההליך המשפטי הוא הצוואר הצר של החוויה. בהירות התהליך חלקית בלבד, מעקב הסטטוס לא תמיד נגיש, הראיות מתקבלות בקושי, ורק כמחצית מהמבקשים אכן מגיעים לדיון בפועל. תחושת האיזון מול התביעה חלשה — רק 20% מהמשיבים חשו שהיה איזון אמיתי בינם לבין התביעה/משטרה, במיוחד במגזר היהודי. ההמלצה הברורה: הרפורמה הדיגיטלית צריכה להבטיח דף סטטוס בזמן-אמת, נגישות מלאה לראיות, וחיזוק תחושת ההוגנות והאיזון — לא רק בהירות תהליכית. בנוסף, שיעור גבוה של נשפטים בלי ייצוג משפטי מחייב שעיצוב המערכת הדיגיטלית יניח מראש שהאזרח מייצג את עצמו.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
