@@ -596,7 +596,11 @@ def heatmap_crosstab(df: pd.DataFrame, x: str, y: str, normalize: Optional[str] 
 
 
 def sankey_trial_flow(df: pd.DataFrame, height: int = 460) -> go.Figure:
-    """Simple horizontal bar of the four final outcomes, color-coded by track."""
+    """Simple horizontal bar of the four final outcomes, color-coded by track.
+
+    Uses two separate traces (one per track) so Plotly renders a normal
+    legend with small color swatches.
+    """
     if df.empty:
         return empty_state()
     total = len(df)
@@ -612,31 +616,56 @@ def sankey_trial_flow(df: pd.DataFrame, height: int = 460) -> go.Figure:
         ("לא התקיים דיון", not_held, "ביקשו להישפט", PALETTE["secondary"]),
     ]
     rows.sort(key=lambda r: r[1], reverse=True)
-    labels = [r[0] for r in rows]
-    values = [r[1] for r in rows]
-    tracks = [r[2] for r in rows]
-    colors = [r[3] for r in rows]
-    pcts = [(v / total * 100) if total else 0 for v in values]
+    all_labels = [r[0] for r in rows]
+    max_val = max((r[1] for r in rows), default=1)
 
-    fig = go.Figure(go.Bar(
-        x=values,
-        y=labels,
-        orientation="h",
-        marker=dict(color=colors, line=dict(color="white", width=1)),
-        text=[f"{v:,} ({p:.1f}%)" for v, p in zip(values, pcts)],
-        textposition="inside",
-        insidetextanchor="middle",
-        textfont=dict(color="white", size=16),
-        customdata=tracks,
-        hovertemplate="%{y}<br>מסלול: %{customdata}<br>%{x:,} משיבים<extra></extra>",
-        cliponaxis=False,
-        constraintext="inside",
-    ))
+    fig = go.Figure()
+    seen_tracks: set[str] = set()
+    for track_name, color in [
+        ("לא ביקשו להישפט", PALETTE["accent"]),
+        ("ביקשו להישפט", PALETTE["secondary"]),
+    ]:
+        # Keep one bar per label so y-axis order stays consistent across traces;
+        # zero out values for labels not in this track so they don't render.
+        x_vals = []
+        text_vals = []
+        for lbl, val, trk, _c in rows:
+            if trk == track_name:
+                pct = (val / total * 100) if total else 0
+                x_vals.append(val)
+                text_vals.append(f"{val:,} ({pct:.1f}%)")
+            else:
+                x_vals.append(0)
+                text_vals.append("")
+        fig.add_trace(go.Bar(
+            name=track_name,
+            x=x_vals,
+            y=all_labels,
+            orientation="h",
+            marker=dict(color=color, line=dict(color="white", width=1)),
+            text=text_vals,
+            textposition="inside",
+            insidetextanchor="middle",
+            textfont=dict(color="white", size=16),
+            hovertemplate="%{y}<br>" + track_name + "<br>%{x:,} משיבים<extra></extra>",
+            cliponaxis=False,
+            constraintext="inside",
+        ))
+
     fig.update_layout(
+        barmode="overlay",
         title=f"תוצאות התהליך — סך הכל {total:,} משיבים",
-        showlegend=False,
+        showlegend=True,
+        legend=dict(
+            title=dict(text="מסלול", font=dict(color="black")),
+            orientation="v",
+            yanchor="middle", y=0.5,
+            xanchor="left", x=1.02,
+            font=dict(color="black"),
+            bgcolor="rgba(0,0,0,0)",
+        ),
     )
-    fig.update_xaxes(title="", showticklabels=False, range=[0, max(values) * 1.05 if values else 1])
+    fig.update_xaxes(title="", showticklabels=False, range=[0, max_val * 1.05])
     fig.update_yaxes(title="", autorange="reversed")
     return _base_layout(fig, height=height)
 
