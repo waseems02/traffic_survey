@@ -12,7 +12,7 @@ from utils.charts import kpi_card_html, get_common_kpis
 from utils.filters import init_global_filters, require_data
 
 
-st.set_page_config(layout="wide", page_title="מנוע הצלבה")
+st.set_page_config(layout="wide", page_title="מחולל לוחות")
 
 
 def _inject_css():
@@ -32,7 +32,7 @@ df = require_data()
 st.markdown(
     """
     <div class='page-header'>
-      <h1>🔬 מנוע הצלבה דינמי</h1>
+      <h1>🔬 מחולל לוחות דינמי</h1>
       <p>בנה הצלבה (Crosstab) של כל שני משתנים בנתונים — כדי לחקור דפוסים מעבר למה שהוצג במצגת</p>
     </div>
     """,

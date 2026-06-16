@@ -1,6 +1,7 @@
 """Home page — Ministry of Justice Traffic-Reports dashboard."""
 from __future__ import annotations
 
+import base64
 import os
 
 import streamlit as st
@@ -42,11 +43,29 @@ def inject_css():
 inject_css()
 
 
+def _hero_image_data_uri() -> str:
+    path = os.path.join(os.path.dirname(__file__), "assets", "Israel_image.jpg")
+    if not os.path.exists(path):
+        return ""
+    with open(path, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode("ascii")
+    return f"data:image/jpeg;base64,{encoded}"
+
+
+_hero_img = _hero_image_data_uri()
+_hero_img_html = f"<img class='dashboard-hero__img' src='{_hero_img}' alt='' />" if _hero_img else ""
+
 st.markdown(
-    """
+    f"""
     <div class='dashboard-hero'>
-      <h1>⚖️ סקר מקבלי דוחות תעבורה</h1>
-      <p>סקר טרום-רפורמה של משרד המשפטים | 505 משיבים | אפריל 2026</p>
+      {_hero_img_html}
+      <div class='dashboard-hero__text'>
+        <h1>סקר מקבלי דוחות תעבורה</h1>
+        <p>סקר טרום-רפורמה של משרד המשפטים</p>
+        <p>אפריל 2026</p>
+        <p>שלומית כהן , וסים סעדי</p>
+        <p> תכנון מדיניות ואסטרטגיה, משרד המשפטים</p>
+      </div>
     </div>
     """,
     unsafe_allow_html=True,
