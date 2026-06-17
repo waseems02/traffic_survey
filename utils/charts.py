@@ -10,12 +10,12 @@ import plotly.graph_objects as go
 
 
 PALETTE = {
-    "primary": "#003366",
-    "secondary": "#0066cc",
-    "accent": "#00cc99",
-    "warn": "#ffcc00",
-    "danger": "#cc3333",
-    "muted": "#8aa3c0",
+    "primary": "#19647E",   # dark teal — dominant brand
+    "secondary": "#119DA4", # teal — secondary brand
+    "accent": "#FFC857",    # gold — positive / highlight
+    "warn": "#FFC857",      # gold — caution (shared with accent)
+    "danger": "#4B3F72",    # deep purple — negative / severe
+    "muted": "#69A257",     # green — neutral / disabled
 }
 
 # Mirror of PALETTE — kept so outline/error-bar uses still work after the revert.
@@ -46,19 +46,19 @@ SECTOR_COLORS = {
 
 GENDER_COLORS = {
     "גבר": PALETTE["primary"],
-    "אישה": PALETTE["accent"],
+    "אישה": PALETTE["danger"],
 }
 
 # 3-level ordinal: "balance vs prosecution", and similar (כלל לא → באופן חלקי → באופן מלא)
 BALANCE_COLORS = {
     "כלל לא": PALETTE["danger"],
     "באופן חלקי": PALETTE["warn"],
-    "באופן מלא": PALETTE["accent"],
+    "באופן מלא": PALETTE["secondary"],
 }
 
 # Awareness (3 ordered states from full awareness to none)
 AWARENESS_COLORS = {
-    "כן, ידעתי": PALETTE["accent"],
+    "כן, ידעתי": PALETTE["secondary"],
     "ידעתי באופן חלקי": PALETTE["warn"],
     "לא ידעתי": PALETTE["danger"],
 }
@@ -68,7 +68,7 @@ HEARING_STATUS_COLORS = {
     "כן, בנוכחותי": PALETTE["primary"],
     "כן, אבל לא בנוכחותי (עו\"ד ייצג אותי)": PALETTE["secondary"],
     "כן, אבל לא התייצבתי (לא ידעתי על תאריך הדיון או בחרתי לא להתייצב)": PALETTE["accent"],
-    "טרם נקבע דיון": PALETTE["warn"],
+    "טרם נקבע דיון": "#6B5BA0",
     "לא נקבע דיון וההליך התבטל": PALETTE["danger"],
     "אין מענה": PALETTE["muted"],
 }
@@ -76,7 +76,7 @@ HEARING_STATUS_COLORS = {
 # Sequence for any demographic / multi-category chart (districts, age bands, education, etc.)
 DEMOGRAPHIC_SEQUENCE = [
     PALETTE["primary"], PALETTE["secondary"], PALETTE["accent"],
-    PALETTE["warn"], PALETTE["danger"], PALETTE["muted"],
+    PALETTE["danger"], PALETTE["muted"], "#6B5BA0",
 ]
 
 NO_ANSWER_COLOR = PALETTE["muted"]
@@ -126,9 +126,9 @@ def _add_small_segment_warning(fig: go.Figure, group_counts: dict, threshold: in
             xref="paper", yref="paper",
             x=0.5, y=0.94,
             showarrow=False,
-            font=dict(size=12, color="#cc3333"),
+            font=dict(size=12, color="#4B3F72"),
             bgcolor="rgba(255,255,255,0.95)",
-            bordercolor="rgba(204,51,51,0.5)",
+            bordercolor="rgba(75,63,114,0.5)",
             borderwidth=1,
             borderpad=5,
             xanchor="center",
@@ -563,7 +563,7 @@ def treemap(df: pd.DataFrame, binary_cols: dict, title: Optional[str] = None, he
         return empty_state()
     s = pd.DataFrame(rows).sort_values("count", ascending=False)
     fig = px.treemap(s, path=["category"], values="count", color="count",
-                      color_continuous_scale=["#cfe0f5", "#0066cc", "#003366"])
+                      color_continuous_scale=["#E0EFF1", "#119DA4", "#19647E"])
     fig.update_layout(title=title)
     fig.update_traces(textinfo="label+value+percent root")
     return _base_layout(fig, height=height)
@@ -586,7 +586,7 @@ def heatmap_crosstab(df: pd.DataFrame, x: str, y: str, normalize: Optional[str] 
     fig = go.Figure(go.Heatmap(
         z=ct.values, x=ct.columns.astype(str), y=ct.index.astype(str),
         text=text, texttemplate="%{text}",
-        colorscale=[[0, "#eaf0f8"], [0.5, "#6699cc"], [1, "#003366"]],
+        colorscale=[[0, "#EAF0F8"], [0.5, "#7AB4BC"], [1, "#19647E"]],
         hovertemplate=hover,
         colorbar=dict(title="%" if normalize else "n"),
     ))

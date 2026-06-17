@@ -13,13 +13,10 @@ from utils.charts import (
     _text_on,
     LIKERT_3BAND_COLORS,
     LIKERT_3BAND_ORDER,
-    TRIAL_COLORS,
     DEMOGRAPHIC_SEQUENCE,
     empty_state,
     likert_summary_strip,
     stacked_pct_bar,
-    district_stats_bar,
-    district_comparison_grouped,
 )
 from utils.charts import kpi_card_html, get_common_kpis
 from utils.data_loader import likert_to_3band
@@ -88,8 +85,7 @@ with k4:
 st.markdown(
     """
     <div class='insight-box'>
-      <h4>📖 על מה העמוד הזה</h4>
-      <p>כעת אנחנו בוחנים את התחושה בסוף הדרך: עד כמה האזרחים מרוצים מהתהליך שעברו, האם הם חשים שהוא עודד אותם לזהירות עתידית, ומה הם היו ממליצים לחבר שקיבל דוח. ההמלצה לחבר מהווה מדד עקיף לאיכות החוויה — האם הם רואים בתהליך משהו שכדאי לעבור, או משהו שכדאי להימנע ממנו ולשלם כמה שיותר מהר. סעיף נוסף סוקר פערים בין מחוזות שונים, כדי לבחון האם המיקום הגיאוגרפי משפיע על שביעות הרצון.</p>
+      <p>שביעות הרצון מהתהליך נמוכה במיוחד בקרב המבקשים להישפט בשני המגזרים — סימן ברור לכך שההליך המשפטי, ולא רק עצם הקנס, הוא מקור הכאב. עם זאת, נראה כי הדוחות מעודדים באופן בינוני נהיגה זהירה, עידוד לנהיגה זהירה נשמר יחסית יציב בכל הקבוצות, בקרב המשיבים שלא היו מרוצים מהתהליך. ההמלצות לחבר משקפות שני קולות נפרדים — מי שוויתרו על ההליך ממליצים "לשלם ולשכוח", ואילו מי שעברו את ההליך ממליצים לפנות לייעוץ ולדרוש את יומם בבית המשפט. ההבדל הזה הוא לב הרפורמה: להפוך את המסלול המשפטי לאפשרות אמיתית — ברורה, נגישה, ובעלת ערך — ולא לתהליך שמרתיע מראש.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -101,62 +97,65 @@ st.markdown(
 # =========================================================
 st.markdown("<div class='section-header'>1. שביעות רצון מהתהליך והשפעה על נהיגה עתידית</div>", unsafe_allow_html=True)
 
-fig = likert_summary_strip(
-    df,
-    columns=[
-        ("process_satisfaction_num", "שביעות רצון מהתהליך"),
-        ("future_caution_num", "עידוד לנהיגה זהירה בעתיד"),
-    ],
-    height=280,
-    )
-fig.update_traces(textfont_color='white')
-fig.update_layout(title=dict(text="שביעות רצון מהתהליך ועידוד לנהיגה זהירה — ציון ממוצע ± סטיית תקן (1-5)"))
-st.plotly_chart(fig,use_container_width=True)
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
+    fig = likert_summary_strip(
+        df,
+        columns=[
+            ("process_satisfaction_num", "שביעות רצון מהתהליך"),
+            ("future_caution_num", "עידוד לנהיגה זהירה בעתיד"),
+        ],
+        height=280,
+        )
+    fig.update_traces(textfont_color='white')
+    fig.update_layout(title=dict(text="שביעות רצון מהתהליך ועידוד לנהיגה זהירה — ציון ממוצע ± סטיית תקן (1-5)"))
+    st.plotly_chart(fig,use_container_width=True)
 
-c1, c2 = st.columns(2)
-with c1:
-    work = df.copy()
-    work["likert_band"] = likert_to_3band(work["process_satisfaction"])
-    work["group"] = work["trial_label"] + " <br> " + work["migzar"].fillna("לא ידוע")
-    st.plotly_chart(
-        stacked_pct_bar(
-            work.dropna(subset=["likert_band", "group"]),
-            group_col="group", value_col="likert_band",
-            category_order=LIKERT_3BAND_ORDER, color_map=LIKERT_3BAND_COLORS,
-            title="שביעות רצון — מסלול × מגזר",
-        ),
-        use_container_width=True,
-    )
-with c2:
-    work = df.copy()
-    work["likert_band"] = likert_to_3band(work["future_caution"])
-    work["group"] = work["trial_label"] + " <br> " + work["migzar"].fillna("לא ידוע")
-    st.plotly_chart(
-        stacked_pct_bar(
-            work.dropna(subset=["likert_band", "group"]),
-            group_col="group", value_col="likert_band",
-            category_order=LIKERT_3BAND_ORDER, color_map=LIKERT_3BAND_COLORS,
-            show_mean=True,
-            title="עידוד לנהיגה זהירה — מסלול × מגזר",
-        ),
-        use_container_width=True,
-    )
+    c1, c2 = st.columns(2)
+    with c1:
+        work = df.copy()
+        work["likert_band"] = likert_to_3band(work["process_satisfaction"])
+        work["group"] = work["trial_label"] + " <br> " + work["migzar"].fillna("לא ידוע")
+        st.plotly_chart(
+            stacked_pct_bar(
+                work.dropna(subset=["likert_band", "group"]),
+                group_col="group", value_col="likert_band",
+                category_order=LIKERT_3BAND_ORDER, color_map=LIKERT_3BAND_COLORS,
+                title="שביעות רצון — מסלול × מגזר",
+            ),
+            use_container_width=True,
+        )
+    with c2:
+        work = df.copy()
+        work["likert_band"] = likert_to_3band(work["future_caution"])
+        work["group"] = work["trial_label"] + " <br> " + work["migzar"].fillna("לא ידוע")
+        st.plotly_chart(
+            stacked_pct_bar(
+                work.dropna(subset=["likert_band", "group"]),
+                group_col="group", value_col="likert_band",
+                category_order=LIKERT_3BAND_ORDER, color_map=LIKERT_3BAND_COLORS,
+                show_mean=True,
+                title="עידוד לנהיגה זהירה — מסלול × מגזר",
+            ),
+            use_container_width=True,
+        )
 
-_sat_mean = df["process_satisfaction_num"].mean()
-_caution_mean = df["future_caution_num"].mean()
-_sat_str = f"{_sat_mean:.2f}/5" if pd.notna(_sat_mean) else "-"
-_caution_str = f"{_caution_mean:.2f}/5" if pd.notna(_caution_mean) else "-"
-st.markdown(
-    f"""
-    <div class='insight-box'>
-      <h4>💡 שביעות רצון מהתהליך והשפעה על נהיגה עתידית</h4>
-      <p>שני המדדים הללו תופסים שתי זוויות שונות של אותו תהליך: עד כמה החוויה הייתה נוחה ועד כמה היא הותירה השפעה התנהגותית. בולט הפער בין השניים — שביעות הרצון מהתהליך נמוכה יותר מהציון על עידוד לנהיגה זהירה, מה שמרמז שגם תהליך הנחווה כלא־ידידותי עדיין מצליח לשרת את המטרה ההרתעתית של מערכת האכיפה.</p>
-      <p>בחיתוך לפי מסלול × מגזר ניכר כי שביעות הרצון נמוכה במיוחד בקרב מבקשי ההישפטות בשני המגזרים — סימן לכך שהמפגש עם ההליך המשפטי עצמו, ולא רק עם הקנס, הוא נקודת הכאב המרכזית. עידוד לנהיגה זהירה, לעומת זאת, נשאר יציב יחסית בין הקבוצות, כלומר המסר ההרתעתי מועבר באופן רוחבי גם כאשר התהליך עצמו אינו מספק.</p>
-      <p class='live-stat'>📊 מהמדגם המסונן הנוכחי: שביעות רצון ממוצעת: {_sat_str} | עידוד לנהיגה זהירה: {_caution_str}</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+with insight_col:
+    _sat_mean = df["process_satisfaction_num"].mean()
+    _caution_mean = df["future_caution_num"].mean()
+    _sat_str = f"{_sat_mean:.2f}/5" if pd.notna(_sat_mean) else "-"
+    _caution_str = f"{_caution_mean:.2f}/5" if pd.notna(_caution_mean) else "-"
+    st.markdown(
+        f"""
+        <div class='insight-box'>
+          <h4>💡 שביעות רצון מהתהליך והשפעה על נהיגה עתידית</h4>
+          <p>שני המדדים הללו תופסים שתי זוויות שונות של אותו תהליך: עד כמה החוויה הייתה נוחה ועד כמה היא הותירה השפעה התנהגותית. בולט הפער בין השניים — שביעות הרצון מהתהליך נמוכה יותר מהציון על עידוד לנהיגה זהירה, מה שמרמז שגם תהליך הנחווה כלא־ידידותי עדיין מצליח לשרת את המטרה ההרתעתית של מערכת האכיפה.</p>
+          <p>בחיתוך לפי מסלול × מגזר ניכר כי שביעות הרצון נמוכה במיוחד בקרב המבקשים להישפט בשני המגזרים — סימן לכך שהמפגש עם ההליך המשפטי עצמו, ולא רק עם הקנס, הוא נקודת הכאב המרכזית. עידוד לנהיגה זהירה, לעומת זאת, נשאר יציב יחסית בין הקבוצות, כלומר המסר ההרתעתי מועבר באופן רוחבי גם כאשר התהליך עצמו אינו מספק.</p>
+          <p class='live-stat'>📊 מהמדגם המסונן הנוכחי: שביעות רצון ממוצעת: {_sat_str} | עידוד לנהיגה זהירה: {_caution_str}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # =========================================================
@@ -164,168 +163,103 @@ st.markdown(
 # =========================================================
 st.markdown("<div class='section-header'>2. המלצה לחבר שקיבל דוח</div>", unsafe_allow_html=True)
 
-rec = df["friend_recommendation"].dropna()
-rec = rec[~rec.isin(["אחר, פרט:", "לא יודע"])]
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
+    rec = df["friend_recommendation"].dropna()
+    rec = rec[~rec.isin(["אחר, פרט:", "לא יודע"])]
 
-if len(rec):
-    rows = []
-    for trial_label in ["ביקשו להישפט", "שילמו קנס / אחר"]:
-        sub = df[df["trial_label"] == trial_label]
-        if len(sub):
-            counts = sub["friend_recommendation"].value_counts  (normalize=True) * 100
-            for cat, pct in counts.items():
-                if cat in ["אחר, פרט:", "לא יודע"]:
-                    continue
-                rows.append({"מסלול": trial_label, "": cat, "אחוז": pct})
-
-    rec_df = pd.DataFrame(rows)
-    if len(rec_df):
-        order = (
-            rec_df.groupby("")["אחוז"].mean().sort_values(ascending=True).index.tolist()
-        )
-        fig = px.bar(
-            rec_df, y="", x="אחוז", color="מסלול", barmode="group",
-            orientation="h",
-            color_discrete_map=TRIAL_COLORS,
-            category_orders={"": order},
-            text=rec_df["אחוז"].round(1),
-        )
-        fig.update_traces(texttemplate="%{text}%", textposition="inside",
-                          insidetextanchor="middle",
-                          constraintext="inside", cliponaxis=False)
-        for tr in fig.data:
-            tr.textfont = dict(color=_text_on(tr.marker.color))
-        fig.update_layout(
-            template="plotly_white", height=460,
-            paper_bgcolor="white", plot_bgcolor="white",
-            font=dict(color="black"),
-            margin=dict(l=135, r=40, t=90, b=80),
-            autosize=False,
-            title=dict(
-                text="מה היו ממליצים לחבר — לפי מסלול",
-                font=dict(color="black"),
-            ),
-            xaxis=dict(
-                tickfont=dict(color="black"),
-                title_font=dict(color="black"),
-                automargin=True,
-                ticksuffix="%",
-            ),
-            yaxis=dict(
-                tickfont=dict(color="black"),
-                title_font=dict(color="black"),
-                automargin=True,
-                showgrid=True,
-                gridcolor="black",
-                gridwidth=1
-            ),
-            legend=dict(
-                font=dict(color="black"),
-                title=dict(font=dict(color="black")),
-            ),
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    # By sector
-    rows2 = []
-    for trial_label in ["ביקשו להישפט", "שילמו קנס / אחר"]:
-        for m in ["מגזר יהודי", "מגזר ערבי"]:
-            sub = df[(df["trial_label"] == trial_label) & (df["migzar"] == m)]
-            if len(sub) >= 5:
-                counts = sub["friend_recommendation"].value_counts(normalize=True) * 100
+    if len(rec):
+        rows = []
+        for trial_label in ["ביקשו להישפט", "שילמו קנס / אחר"]:
+            sub = df[df["trial_label"] == trial_label]
+            if len(sub):
+                counts = sub["friend_recommendation"].value_counts  (normalize=True) * 100
                 for cat, pct in counts.items():
                     if cat in ["אחר, פרט:", "לא יודע"]:
                         continue
-                    rows2.append({"קבוצה": f"{trial_label} — {m}", "המלצה": cat, "אחוז": pct})
+                    rows.append({"מסלול": trial_label, "": cat, "אחוז": pct})
 
-    if rows2:
-        rec_df2 = pd.DataFrame(rows2)
-        fig2 = px.bar(
-            rec_df2, x="קבוצה", y="אחוז", color="המלצה", barmode="stack",
-            color_discrete_sequence=DEMOGRAPHIC_SEQUENCE,
-            text=rec_df2["אחוז"].round(1),
-        )
-        fig2.update_traces(texttemplate="%{text}%", textposition="inside",
-                            insidetextanchor="middle",
-                            constraintext="inside", cliponaxis=False,
-                            textfont=dict(color="white", size=13))
-        fig2.update_layout(template="plotly_white", height=480,
-                            paper_bgcolor="white", plot_bgcolor="white",
-                            font=dict(color="black"),
-                            margin=dict(l=135, r=40, t=90, b=80),
-                            autosize=False,
-                            title=dict(text="המלצות לחבר — לפי מסלול × מגזר",
-                                       font=dict(color="black")),
-                            legend=dict(font=dict(color="black")),legend_title_font_color="black",
-                            xaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True),
-                            yaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True))
-        fig2.update_yaxes(ticksuffix="%", title="", automargin=True)
-        fig2.update_xaxes(automargin=True)
-        st.plotly_chart(fig2, use_container_width=True)
-else:
-    st.plotly_chart(empty_state(), use_container_width=True)
+        rec_df = pd.DataFrame(rows)
+        if len(rec_df):
+            fig = px.bar(
+                rec_df, x="מסלול", y="אחוז", color="", barmode="stack",
+                color_discrete_sequence=DEMOGRAPHIC_SEQUENCE,
+                text=rec_df["אחוז"].round(1),
+            )
+            fig.update_traces(texttemplate="%{text}%", textposition="inside",
+                              insidetextanchor="middle",
+                              constraintext="inside", cliponaxis=False,
+                              textfont=dict(color="white", size=13))
+            fig.update_layout(
+                template="plotly_white", height=460,
+                paper_bgcolor="white", plot_bgcolor="white",
+                font=dict(color="black"),
+                margin=dict(l=135, r=40, t=90, b=80),
+                autosize=False,
+                title=dict(
+                    text="מה היו ממליצים לחבר — לפי מסלול",
+                    font=dict(color="black"),
+                ),
+                xaxis=dict(
+                    tickfont=dict(color="black"),
+                    title_font=dict(color="black"),
+                    automargin=True,
+                    title="",
+                ),
+                yaxis=dict(
+                    tickfont=dict(color="black"),
+                    title_font=dict(color="black"),
+                    automargin=True,
+                    ticksuffix="%",
+                    title="",
+                ),
+                legend=dict(
+                    font=dict(color="black"),
+                    title=dict(text="המלצה", font=dict(color="black")),
+                ),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        # By sector
+        rows2 = []
+        for trial_label in ["ביקשו להישפט", "שילמו קנס / אחר"]:
+            for m in ["מגזר יהודי", "מגזר ערבי"]:
+                sub = df[(df["trial_label"] == trial_label) & (df["migzar"] == m)]
+                if len(sub) >= 5:
+                    counts = sub["friend_recommendation"].value_counts(normalize=True) * 100
+                    for cat, pct in counts.items():
+                        if cat in ["אחר, פרט:", "לא יודע"]:
+                            continue
+                        rows2.append({"קבוצה": f"{trial_label} — {m}", "המלצה": cat, "אחוז": pct})
 
-render_insight("friend_recommendation", df)
-render_insight("satisfaction", df)
-
-
-# =========================================================
-# 3. ניתוח לפי מחוזות
-# =========================================================
-st.markdown("<div class='section-header'>3. שביעות רצון לפי מחוזות</div>", unsafe_allow_html=True)
-
-if "mahoz_short" in df.columns and df["mahoz_short"].notna().any():
-    c1, c2 = st.columns(2)
-    with c1:
-        st.plotly_chart(
-            district_stats_bar(df, "process_satisfaction_num", title="שביעות רצון מהתהליך — לפי מחוז"),
-            use_container_width=True,
-        )
-    with c2:
-        st.plotly_chart(
-            district_stats_bar(df, "future_caution_num", title="עידוד לנהיגה זהירה — לפי מחוז"),
-            use_container_width=True,
-        )
-
-    st.plotly_chart(
-        district_comparison_grouped(
-            df,
-            numeric_cols=[
-                ("process_satisfaction_num", "שביעות רצון"),
-                ("future_caution_num", "עידוד לזהירות"),
-            ],
-            title="השוואת שביעות רצון ועידוד לזהירות לפי מחוזות (ממוצע ± סטיית תקן)"
-        ),
-        use_container_width=True,
-    )
-
-    _sat_by_d = df.dropna(subset=["mahoz_short", "process_satisfaction_num"]).groupby("mahoz_short")["process_satisfaction_num"].mean()
-    if len(_sat_by_d) >= 2:
-        _max_d, _min_d = _sat_by_d.idxmax(), _sat_by_d.idxmin()
-        _live = f"שביעות רצון גבוהה ביותר: {_max_d} ({_sat_by_d.max():.2f}/5) | נמוכה ביותר: {_min_d} ({_sat_by_d.min():.2f}/5) | פער: {(_sat_by_d.max() - _sat_by_d.min()):.2f} נקודות"
+        if rows2:
+            rec_df2 = pd.DataFrame(rows2)
+            fig2 = px.bar(
+                rec_df2, x="קבוצה", y="אחוז", color="המלצה", barmode="stack",
+                color_discrete_sequence=DEMOGRAPHIC_SEQUENCE,
+                text=rec_df2["אחוז"].round(1),
+            )
+            fig2.update_traces(texttemplate="%{text}%", textposition="inside",
+                                insidetextanchor="middle",
+                                constraintext="inside", cliponaxis=False,
+                                textfont=dict(color="white", size=13))
+            fig2.update_layout(template="plotly_white", height=480,
+                                paper_bgcolor="white", plot_bgcolor="white",
+                                font=dict(color="black"),
+                                margin=dict(l=135, r=40, t=90, b=80),
+                                autosize=False,
+                                title=dict(text="המלצות לחבר — לפי מסלול × מגזר",
+                                           font=dict(color="black")),
+                                legend=dict(font=dict(color="black")),legend_title_font_color="black",
+                                xaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True),
+                                yaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True))
+            fig2.update_yaxes(ticksuffix="%", title="", automargin=True)
+            fig2.update_xaxes(automargin=True)
+            st.plotly_chart(fig2, use_container_width=True)
     else:
-        _live = None
-    _live_html = f"<p class='live-stat'>📊 מהמדגם המסונן הנוכחי: {_live}</p>" if _live else ""
-    st.markdown(
-        f"""
-        <div class='insight-box'>
-          <h4>💡 מה למדנו מהחיתוך הגיאוגרפי</h4>
-          <p>הפיזור בין המחוזות בשני המדדים — שביעות רצון מהתהליך ועידוד לנהיגה זהירה — נשאר מצומצם יחסית לפערים שראינו לפי מסלול ולפי מגזר. כלומר, מיקום גיאוגרפי איננו הגורם הדומיננטי בחוויית התהליך; הגורמים החזקים יותר הם זהות הקבוצה (יהודים/ערבים) והבחירה האם להישפט או לשלם.</p>
-          <p>עם זאת, נראים מחוזות בודדים המציגים סטייה — שביעות רצון גבוהה או נמוכה מהממוצע — ושווה לבחון אם הם משקפים שונות בניהול ההליך, בהיקף האכיפה או באוכלוסייה הגרה במחוז. בקריאת ההשוואה חשוב לזכור שגודל המדגם משתנה בין מחוזות, וקבוצות עם n קטן הוצגו עם אזהרה.</p>
-          {_live_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-else:
-    st.info("נתוני המחוזות לא זמינים בסינון הנוכחי")
+        st.plotly_chart(empty_state(), use_container_width=True)
+
+with insight_col:
+    render_insight("friend_recommendation", df)
+    render_insight("satisfaction", df)
 
 
-st.markdown(
-    """
-    <div class='insight-box'>
-      <h4>🧭 סיכום העמוד</h4>
-      <p>שביעות הרצון מהתהליך נמוכה במיוחד בקרב מבקשי ההישפטות בשני המגזרים — סימן ברור לכך שההליך המשפטי, ולא רק עצם הקנס, הוא מקור הכאב. עם זאת, ההרתעה עובדת: עידוד לנהיגה זהירה נשמר יחסית יציב בכל הקבוצות, גם אצל מי שלא היה מרוצה מהתהליך. ההמלצות לחבר משקפות שני קולות נפרדים — מי שוויתרו על ההליך ממליצים "לשלם ולשכוח", ואילו מי שעברו את ההליך ממליצים לפנות לייעוץ ולדרוש את יומם בבית המשפט. ההבדל הזה הוא לב הרפורמה: להפוך את המסלול המשפטי לאפשרות אמיתית — ברורה, נגישה, ובעלת ערך — ולא לתהליך שמרתיע מראש.</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)

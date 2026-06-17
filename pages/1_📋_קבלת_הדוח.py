@@ -83,8 +83,7 @@ with k4:
 st.markdown(
     """
     <div class='insight-box'>
-      <h4>📖 על מה העמוד הזה</h4>
-      <p>מסע מקבל הדוח מתחיל בנקודת הקבלה — איך הדוח הגיע, ממי, מתי, ועל איזו עבירה. ההבדלים בנקודות אלו בין קבוצות (מגזר, גיל, מסלול) קובעים את נקודת הפתיחה לחוויה הסובייקטיבית של התהליך כולו. בעמוד זה מוצגים מאפייני הרקע: מספר הדוחות לנהג, שנת הדוח, סוגי העבירות הנפוצים, מקור הדוח והערוץ שדרכו הגיע לאזרח.</p>
+      <p>ההתחלה אינה אחידה. מרבית הנהגים קיבלו דוח אחד בלבד, רובם בשנתיים האחרונות, ומרבית הדוחות עוסקים בשלוש עבירות מרכזיות: מהירות, שימוש בטלפון ונסיעה בנת"צ. לעומת זאת, נמצאו הבדלים מובהקים באופן קבלת הדו"ח. הערוץ שדרכו הדוח הגיע משתנה — ובאופן מובהק, ערוץ הקבלה קשור גם להמשך התהליך: המגזר הערבי מקבל יותר דוח"ות משוטרים בשטח, ובשנתיים האחרונות נמצאה ירידה משמעותית במתן דוחות על ידי שוטר. בנוסף, נמצאה קורלציה בין דוחות שהתקבלו פיזית משוטר לשיעורים נמוכים יותר של תשלום הדוח. כבר בנקודת הפתיחה רואים שהמסע אינו אחיד, ושערוץ ההגעה של הדוח משפיע על מה שקורה אחר כך.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -96,8 +95,8 @@ st.markdown(
 # =========================================================
 st.markdown("<div class='section-header'>1. מספר הדוחות לנהג</div>", unsafe_allow_html=True)
 
-_, mid, _ = st.columns([1, 2, 1])
-with mid:
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
     counts = df["report_count_bin"].dropna().value_counts(normalize=True) * 100
     counts = counts.reset_index()
     counts.columns = ["category", "pct"]
@@ -121,7 +120,8 @@ with mid:
     fig.update_xaxes(title="", automargin=True,tickfont=dict(color="black"))
     st.plotly_chart(fig, use_container_width=True)
 
-render_insight("report_count", df)
+with insight_col:
+    render_insight("report_count", df)
 
 
 # =========================================================
@@ -129,19 +129,22 @@ render_insight("report_count", df)
 # =========================================================
 st.markdown("<div class='section-header'>2. מועד קבלת הדוח האחרון</div>", unsafe_allow_html=True)
 
-st.plotly_chart(
-    stacked_pct_bar(
-        df.dropna(subset=["report_year_bin"]),
-        group_col="migzar",
-        value_col="report_year_bin",
-        category_order=["דוח בשנים 24-25", "דוחות ישנים יותר"],
-        color_map={"דוח בשנים 24-25": PALETTE["secondary"], "דוחות ישנים יותר": PALETTE["muted"]},
-        title="התפלגות שנת הדוח לפי מגזר",
-    ),
-    use_container_width=True,
-)
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
+    st.plotly_chart(
+        stacked_pct_bar(
+            df.dropna(subset=["report_year_bin"]),
+            group_col="migzar",
+            value_col="report_year_bin",
+            category_order=["דוח בשנים 24-25", "דוחות ישנים יותר"],
+            color_map={"דוח בשנים 24-25": PALETTE["secondary"], "דוחות ישנים יותר": PALETTE["muted"]},
+            title="התפלגות שנת הדוח לפי מגזר",
+        ),
+        use_container_width=True,
+    )
 
-render_insight("report_year", df)
+with insight_col:
+    render_insight("report_year", df)
 
 
 # =========================================================
@@ -149,37 +152,40 @@ render_insight("report_year", df)
 # =========================================================
 st.markdown("<div class='section-header'>3. סוגי העבירות שהתקבלו</div>", unsafe_allow_html=True)
 
-tab_labels = ["כללי", "מגדר", "גיל", "מסלול", "כמות דוחות", "שנת דוח", "אופן קבלה", "מחוז"]
-tabs = st.tabs(tab_labels)
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
+    tab_labels = ["כללי", "מגדר", "גיל", "מסלול", "כמות דוחות", "שנת דוח", "אופן קבלה", "מחוז"]
+    tabs = st.tabs(tab_labels)
 
-with tabs[0]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות בכללי"), use_container_width=True)
+    with tabs[0]:
+        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות בכללי"), use_container_width=True)
 
-with tabs[1]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מגדר", group_col="gender"), use_container_width=True)
+    with tabs[1]:
+        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מגדר", group_col="gender"), use_container_width=True)
 
-with tabs[2]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי גיל", group_col="age_band"), use_container_width=True)
+    with tabs[2]:
+        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי גיל", group_col="age_band"), use_container_width=True)
 
-with tabs[3]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מסלול", group_col="trial_label"), use_container_width=True)
+    with tabs[3]:
+        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מסלול", group_col="trial_label"), use_container_width=True)
 
-with tabs[4]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי כמות דוחות", group_col="report_count_bin"), use_container_width=True)
+    with tabs[4]:
+        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי כמות דוחות", group_col="report_count_bin"), use_container_width=True)
 
-with tabs[5]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי שנת דוח", group_col="report_year_bin"), use_container_width=True)
+    with tabs[5]:
+        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי שנת דוח", group_col="report_year_bin"), use_container_width=True)
 
-with tabs[6]:
-    st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי אופן קבלה", group_col="report_channel_bin"), use_container_width=True)
+    with tabs[6]:
+        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי אופן קבלה", group_col="report_channel_bin"), use_container_width=True)
 
-with tabs[7]:
-    if "mahoz_short" in df.columns:
-        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מחוז", group_col="mahoz_short", height=560), use_container_width=True)
-    else:
-        st.info("נתוני המחוזות לא זמינים")
+    with tabs[7]:
+        if "mahoz_short" in df.columns:
+            st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מחוז", group_col="mahoz_short", height=560), use_container_width=True)
+        else:
+            st.info("נתוני המחוזות לא זמינים")
 
-render_insight("offense_type", df)
+with insight_col:
+    render_insight("offense_type", df)
 
 
 # =========================================================
@@ -187,8 +193,8 @@ render_insight("offense_type", df)
 # =========================================================
 st.markdown("<div class='section-header'>4. ממי ואיך התקבל הדוח</div>", unsafe_allow_html=True)
 
-c1, c2 = st.columns(2)
-with c1:
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
     src = df["report_source"].dropna()
     s = src.value_counts(normalize=True).reset_index() * 1
     s.columns = ["category", "pct"]
@@ -211,7 +217,13 @@ with c1:
     fig.update_xaxes(dict(tickfont=dict(color="black"), title="", automargin=True))
     st.plotly_chart(fig, use_container_width=True)
 
-with c2:
+with insight_col:
+    render_insight("report_source", df)
+    render_insight("report_channel", df)
+
+
+c1, c2 = st.columns(2)
+with c1:
     ch = df["report_channel"].dropna()
     s = ch.value_counts(normalize=True).reset_index()
     s.columns = ["category", "pct"]
@@ -232,17 +244,17 @@ with c2:
     fig.update_yaxes(dict(tickfont=dict(color="black"), title="", autorange="reversed", automargin=True,showgrid=True, gridcolor="black",gridwidth=1.2))
     st.plotly_chart(fig, use_container_width=True)
 
-
-st.plotly_chart(
-    stacked_pct_bar(
-        df.dropna(subset=["report_channel_bin"]),
-        group_col="trial_label",
-        value_col="report_channel_bin",
-        color_map={"פיזית משוטר בשטח": PALETTE["primary"], "כל השאר": PALETTE["accent"]},
-        title="אופן הקבלה לפי מסלול",
-    ),
-    use_container_width=True,
-)
+with c2:
+    st.plotly_chart(
+        stacked_pct_bar(
+            df.dropna(subset=["report_channel_bin"]),
+            group_col="trial_label",
+            value_col="report_channel_bin",
+            color_map={"פיזית משוטר בשטח": PALETTE["primary"], "כל השאר": PALETTE["accent"]},
+            title="אופן הקבלה לפי מסלול",
+        ),
+        use_container_width=True,
+    )
 
 c3, c4 = st.columns(2)
 with c3:
@@ -286,16 +298,4 @@ st.plotly_chart(
     use_container_width=True,
 )
 
-render_insight("report_source", df)
-render_insight("report_channel", df)
 
-
-st.markdown(
-    """
-    <div class='insight-box'>
-      <h4>🧭 סיכום העמוד</h4>
-      <p>ההתחלה אינה אחידה. מרבית הנהגים מקבלים דוח אחד בלבד, רובם בשנתיים האחרונות, ומרבית הדוחות עוסקים בשלוש עבירות מרכזיות: מהירות, שימוש בטלפון ונסיעה בנת"צ. אבל הערוץ שדרכו הדוח הגיע משתנה — ובאופן מובהק, ערוץ הקבלה קשור גם להמשך התהליך: דוחות שהתקבלו פיזית משוטר מובילים לשיעור תשלום נמוך יותר מדוחות שהגיעו בדואר. כבר בנקודת הפתיחה רואים שהמסע אינו אחיד, ושערוץ ההגעה של הדוח משפיע על מה שקורה אחר כך.</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)

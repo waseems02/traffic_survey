@@ -47,7 +47,7 @@ st.markdown(
     """
     <div class='page-header'>
       <h1>🧠 הבנה, חלופות והתמודדות בפועל</h1>
-      <p>מה הבינו, מה ידעו, את מי התייעצו, ואיך הגיבו בפועל</p>
+      <p>מה הבינו?, מה ידעו?, עם מי התייעצו?, ואיך הגיבו בפועל?</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -88,8 +88,7 @@ with k4:
 st.markdown(
     """
     <div class='insight-box'>
-      <h4>📖 על מה העמוד הזה</h4>
-      <p>בין רגע קבלת הדוח לבין ההחלטה איך לפעול עוברת חלון הזמן הקצר שבו האזרח צריך להבין מה קרה ואילו אפשרויות עומדות בפניו. עמוד זה בוחן את שלב המודעות וההחלטה: רמת ההבנה של העבירה ושל אפשרויות הפעולה, מודעות לחלופות (המרה לאזהרה, בקשה להישפט), הצורך בליווי משפטי, החסמים לבקשת המרה, ולבסוף — תשלום הקנס בפועל. כאן מתבררת השאלה האם המסלול שנבחר היה החלטה מודעת או "ברירת מחדל" בהיעדר מידע.</p>
+      <p>חוסר המודעות הוא הסיפור המרכזי כאן. חלקים נרחבים מהאזרחים — במיוחד מי שלא ביקשו להישפט — לא ידעו כלל על קיומן של החלופות, כלומר ההחלטה הראשונית שלהם לא הייתה החלטה מודעת אלא ברירת מחדל. הצורך הנתפס בעורך דין עולה בעיקר בקרב המבקשים להישפט, ובמיוחד במגזר הערבי, כי ההתמודדות עם המערכת המשפטית נתפסת כאתגר אמיתי הדורש ליווי. בסופו של דבר, מרבית הנהגים שילמו את הקנס (בייחוד בחברה הערבית), אך הסיבות מגוונות — מתחושת חוסר טעם בהליך משפטי ועד חששות בירוקרטיים-כלכליים. הרפורמה צריכה להבליט את החלופות באופן אקטיבי ("מסך חובה" בתהליך הדיגיטלי), ולא להניח שהאזרח יודע על קיומן.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -101,24 +100,29 @@ st.markdown(
 # =========================================================
 st.markdown("<div class='section-header'>1. תפיסות כלפי קבלת הדוח</div>", unsafe_allow_html=True)
 
-fig = likert_summary_strip(
-    df,
-    columns=[
-        ("understand_offense_num", "הבנת העבירה והעונש"),
-        ("understand_options_num", "הבנת אפשרויות הפעולה"),
-        ("report_justified_num", "מוצדקות הדוח"),
-        ("voice_heard_num", "האפשרות להשמיע קול"),
-    ],
-    height=330,
-)
-fig.update_traces(textfont_color='white')
-fig.update_layout(title=dict(text="תפיסות הליבה לגבי קבלת הדוח", font=dict(color="black")))
-st.plotly_chart(fig, use_container_width=True)
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
+    fig = likert_summary_strip(
+        df,
+        columns=[
+            ("understand_offense_num", "הבנת העבירה והעונש"),
+            ("understand_options_num", "הבנת אפשרויות הפעולה"),
+            ("report_justified_num", "הצדקת הדוח"),
+            ("voice_heard_num", "האפשרות להשמיע קול"),
+        ],
+        height=330,
+    )
+    fig.update_traces(textfont_color='white')
+    fig.update_layout(title=dict(text="תפיסות הליבה לגבי קבלת הדוח", font=dict(color="black")))
+    st.plotly_chart(fig, use_container_width=True)
+
+with insight_col:
+    render_insight("understanding", df)
 
 c1, c2 = st.columns(2)
 for col, label, container in [
     ("understand_offense", "הבנת העבירה והעונש — לפי מסלול × מגזר", c1),
-    ("report_justified", "מוצדקות הדוח — לפי מסלול × מגזר", c2),
+    ("report_justified", "הצדקת הדוח — לפי מסלול × מגזר", c2),
 ]:
     with container:
         work = df.copy()
@@ -135,74 +139,75 @@ for col, label, container in [
         )
         st.plotly_chart(fig, use_container_width=True)
 
-render_insight("understanding", df)
-
 
 # =========================================================
 # 2. מודעות לחלופות (PPT 18-19)
 # =========================================================
 st.markdown("<div class='section-header'>2. מודעות לחלופות הקיימות</div>", unsafe_allow_html=True)
 
-c1, c2 = st.columns([1, 1.3])
-with c1:
-    no_trial = df[~df["requested_trial"]]
-    awareness = pd.DataFrame({
-        "category": ["ידעו על<br>  המרה לאזהרה", "ידעו על <br> בקשה להישפט", "לא ידעו כלל"],
-        "pct": [
-            no_trial["aware_convert"].mean(skipna=True) * 100,
-            no_trial["aware_trial"].mean(skipna=True) * 100,
-            no_trial["aware_none"].mean(skipna=True) * 100,
-        ],
-    })
-    fig = px.bar(awareness, x="category", y="pct",
-                  color="category",
-                  color_discrete_sequence=[PALETTE["accent"], PALETTE["secondary"], PALETTE["danger"]],
-                  text=[f"{v:.1f}%" for v in awareness["pct"]])
-    fig.update_layout(showlegend=True, height=380, template="plotly_white",legend_font_color="black",legend_title_text="סוג המודעות",
-                      legend_title_font_color="black",
-                      paper_bgcolor="white", plot_bgcolor="white",
-                      font=dict(color="black"),
-                      autosize=False,
-                      title="מודעות בקרב מי שלא ביקשו להישפט",title_font_color="black",)
-    fig.update_traces(textposition="inside", insidetextanchor="middle",
-                      constraintext="inside", cliponaxis=False)
-    for tr in fig.data:
-        tr.textfont = dict(color=_text_on(tr.marker.color))
-    fig.update_yaxes(ticksuffix="%", title="", automargin=True,tickfont=dict(color="black"))
-    fig.update_xaxes(title="", automargin=True,tickfont=dict(color="black"),tickangle=0)
-    st.plotly_chart(fig, use_container_width=True)
-
-with c2:
-    rows = []
-    for m in df["migzar"].dropna().unique():
-        sub = no_trial[no_trial["migzar"] == m]
-        if len(sub) == 0:
-            continue
-        rows.append({"מגזר": m, "סוג": "ידעו על המרה לאזהרה", "pct": sub["aware_convert"].mean(skipna=True) * 100})
-        rows.append({"מגזר": m, "סוג": "ידעו על בקשה להישפט", "pct": sub["aware_trial"].mean(skipna=True) * 100})
-        rows.append({"מגזר": m, "סוג": "לא ידעו כלל", "pct": sub["aware_none"].mean(skipna=True) * 100})
-    if rows:
-        seg_df = pd.DataFrame(rows)
-        fig = px.bar(seg_df, x="מגזר", y="pct", color="סוג", barmode="group",
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
+    c1, c2 = st.columns([1, 1.3])
+    with c1:
+        no_trial = df[~df["requested_trial"]]
+        awareness = pd.DataFrame({
+            "category": ["ידעו<br> על<br>  המרה<br> לאזהרה", "ידעו <br>על <br> בקשה<br> להישפט", "לא ידעו <br>כלל"],
+            "pct": [
+                no_trial["aware_convert"].mean(skipna=True) * 100,
+                no_trial["aware_trial"].mean(skipna=True) * 100,
+                no_trial["aware_none"].mean(skipna=True) * 100,
+            ],
+        })
+        fig = px.bar(awareness, x="category", y="pct",
+                      color="category",
                       color_discrete_sequence=[PALETTE["accent"], PALETTE["secondary"], PALETTE["danger"]],
-                      text=seg_df["pct"].round(1))
-        fig.update_traces(texttemplate="%{text}%", textposition="inside", insidetextanchor="middle",
+                      text=[f"{v:.1f}%" for v in awareness["pct"]])
+        fig.update_layout(showlegend=True, height=380, template="plotly_white",legend_font_color="black",legend_title_text="סוג המודעות",
+                          legend_title_font_color="black",
+                          paper_bgcolor="white", plot_bgcolor="white",
+                          font=dict(color="black"),
+                          autosize=False,
+                          title="מודעות בקרב מי שלא ביקשו להישפט",title_font_color="black",)
+        fig.update_traces(textposition="inside", insidetextanchor="middle",
                           constraintext="inside", cliponaxis=False)
         for tr in fig.data:
             tr.textfont = dict(color=_text_on(tr.marker.color))
-        fig.update_layout(height=380, template="plotly_white",
-                          paper_bgcolor="white", plot_bgcolor="white",legend_font_color="black",
-                          legend_title_text="סוג המודעות",legend_title_font_color="black",
-                          font=dict(color="black"),
-                          autosize=False,
-                          title="מודעות לחלופות לפי מגזר",title_font_color="black",)
         fig.update_yaxes(ticksuffix="%", title="", automargin=True,tickfont=dict(color="black"))
-        fig.update_xaxes(title="", automargin=True,tickfont=dict(color="black"))
+        fig.update_xaxes(title="", automargin=True,tickfont=dict(color="black"),tickangle=0)
         st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.plotly_chart(empty_state(), use_container_width=True)
 
-render_insight("awareness", df)
+    with c2:
+        rows = []
+        for m in df["migzar"].dropna().unique():
+            sub = no_trial[no_trial["migzar"] == m]
+            if len(sub) == 0:
+                continue
+            rows.append({"מגזר": m, "סוג": "ידעו על המרה לאזהרה", "pct": sub["aware_convert"].mean(skipna=True) * 100})
+            rows.append({"מגזר": m, "סוג": "ידעו על בקשה להישפט", "pct": sub["aware_trial"].mean(skipna=True) * 100})
+            rows.append({"מגזר": m, "סוג": "לא ידעו כלל", "pct": sub["aware_none"].mean(skipna=True) * 100})
+        if rows:
+            seg_df = pd.DataFrame(rows)
+            fig = px.bar(seg_df, x="מגזר", y="pct", color="סוג", barmode="group",
+                          color_discrete_sequence=[PALETTE["accent"], PALETTE["secondary"], PALETTE["danger"]],
+                          text=seg_df["pct"].round(1))
+            fig.update_traces(texttemplate="%{text}%", textposition="inside", insidetextanchor="middle",
+                              constraintext="inside", cliponaxis=False)
+            for tr in fig.data:
+                tr.textfont = dict(color=_text_on(tr.marker.color))
+            fig.update_layout(height=380, template="plotly_white",
+                              paper_bgcolor="white", plot_bgcolor="white",legend_font_color="black",
+                              legend_title_text="סוג המודעות",legend_title_font_color="black",
+                              font=dict(color="black"),
+                              autosize=False,
+                              title="מודעות לחלופות לפי מגזר",title_font_color="black",)
+            fig.update_yaxes(ticksuffix="%", title="", automargin=True,tickfont=dict(color="black"))
+            fig.update_xaxes(title="", automargin=True,tickfont=dict(color="black"))
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.plotly_chart(empty_state(), use_container_width=True)
+
+with insight_col:
+    render_insight("awareness", df)
 
 
 # =========================================================
@@ -210,42 +215,45 @@ render_insight("awareness", df)
 # =========================================================
 st.markdown("<div class='section-header'>3. צורך בליווי משפטי</div>", unsafe_allow_html=True)
 
-st.plotly_chart(
-    stacked_pct_bar(
-        df.dropna(subset=["lawyer_consult_bin"]),
-        group_col="trial_label",
-        value_col="lawyer_consult_bin",
-        category_order=["לא חשתי צורך להתייעץ או להיעזר בעורך דין", "חשבתי להתייעץ עם עורך דין", "כן, התייעצתי/נעזרתי בעורך דין"],
-        color_map={
-            "לא חשתי צורך להתייעץ או להיעזר בעורך דין": PALETTE["muted"],
-            "חשבתי להתייעץ עם עורך דין": PALETTE["warn"],
-            "כן, התייעצתי/נעזרתי בעורך דין": PALETTE["secondary"],
-        },
-        title="צורך בליווי עו\"ד לפי מסלול",
-    ),
-    use_container_width=True,
-)
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
+    st.plotly_chart(
+        stacked_pct_bar(
+            df.dropna(subset=["lawyer_consult_bin"]),
+            group_col="trial_label",
+            value_col="lawyer_consult_bin",
+            category_order=["לא חשתי צורך להתייעץ או להיעזר בעורך דין", "חשבתי להתייעץ עם עורך דין", "כן, התייעצתי/נעזרתי בעורך דין"],
+            color_map={
+                "לא חשתי צורך להתייעץ או להיעזר בעורך דין": PALETTE["muted"],
+                "חשבתי להתייעץ עם עורך דין": PALETTE["warn"],
+                "כן, התייעצתי/נעזרתי בעורך דין": PALETTE["secondary"],
+            },
+            title="צורך בליווי עו\"ד לפי מסלול",
+        ),
+        use_container_width=True,
+    )
 
 
-work = df.copy()
-work["group"] = work["trial_label"] + " — " + work["migzar"].fillna("לא ידוע")
-st.plotly_chart(
-    stacked_pct_bar(
-        work.dropna(subset=["lawyer_consult_bin", "group"]),
-        group_col="group",
-        value_col="lawyer_consult_bin",
-        category_order=["לא חשתי צורך להתייעץ או להיעזר בעורך דין", "חשבתי להתייעץ עם עורך דין", "כן, התייעצתי/נעזרתי בעורך דין"],
-        color_map={
-            "לא חשתי צורך להתייעץ או להיעזר בעורך דין": PALETTE["muted"],
-            "חשבתי להתייעץ עם עורך דין": PALETTE["warn"],
-            "כן, התייעצתי/נעזרתי בעורך דין": PALETTE["secondary"],
-        },
-        title="צורך בליווי עו\"ד — מסלול × מגזר",
-    ),
-    use_container_width=True,
-)
+    work = df.copy()
+    work["group"] = work["trial_label"] + " — " + work["migzar"].fillna("לא ידוע")
+    st.plotly_chart(
+        stacked_pct_bar(
+            work.dropna(subset=["lawyer_consult_bin", "group"]),
+            group_col="group",
+            value_col="lawyer_consult_bin",
+            category_order=["לא חשתי צורך להתייעץ או להיעזר בעורך דין", "חשבתי להתייעץ עם עורך דין", "כן, התייעצתי/נעזרתי בעורך דין"],
+            color_map={
+                "לא חשתי צורך להתייעץ או להיעזר בעורך דין": PALETTE["muted"],
+                "חשבתי להתייעץ עם עורך דין": PALETTE["warn"],
+                "כן, התייעצתי/נעזרתי בעורך דין": PALETTE["secondary"],
+            },
+            title="צורך בליווי עו\"ד — מסלול × מגזר",
+        ),
+        use_container_width=True,
+    )
 
-render_insight("lawyer", df)
+with insight_col:
+    render_insight("lawyer", df)
 
 
 # =========================================================
@@ -253,73 +261,76 @@ render_insight("lawyer", df)
 # =========================================================
 st.markdown("<div class='section-header'>4. המרת הדוח לאזהרה והחסמים לבקשה להישפט</div>", unsafe_allow_html=True)
 
-c1, c2 = st.columns([1, 1.2])
-with c1:
-    base = df[(~df["requested_trial"]) & (df["aware_convert"] == 1)]
-    rows = []
-    for m in ["מגזר יהודי", "מגזר ערבי"]:
-        sub = base[base["migzar"] == m]
-        if len(sub):
-            rate = sub["asked_convert_warning"].eq("כן").mean() * 100
-            rows.append({"מגזר": m, "שיעור שביקשו המרה (%)": rate, "n": len(sub)})
-    if rows:
-        conv_df = pd.DataFrame(rows)
-        fig = px.bar(conv_df, x="מגזר", y="שיעור שביקשו המרה (%)",
-                      color="מגזר",
-                      color_discrete_map=SECTOR_COLORS,
-                      text=[f"{v:.1f}%" for v in conv_df['שיעור שביקשו המרה (%)']])
-        fig.update_traces(textposition="inside", insidetextanchor="middle",
-                          constraintext="inside", cliponaxis=False)
-        for tr in fig.data:
-            tr.textfont = dict(color=_text_on(tr.marker.color))
-        fig.update_layout(showlegend=False, height=400, template="plotly_white",
-                          paper_bgcolor="white", plot_bgcolor="white",
-                          font=dict(color="black"),
-                          margin=dict(l=135, r=40, t=90, b=80),
-                          autosize=False,
-                          title="שיעור בקשות להמרה לאזהרה (בקרב המודעים לאפשרות בלבד)",
-                          title_font_color="black")
-        fig.update_yaxes( ticksuffix="%", range=[0, 80], automargin=True,tickfont=dict(color="black"), title_font=dict(color="black"),title_text="")
-        fig.update_xaxes(automargin=True,tickfont=dict(color="black"), title_font=dict(color="black"),title_text="")
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.plotly_chart(empty_state(), use_container_width=True)
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
+    c1, c2 = st.columns([1, 1.2])
+    with c1:
+        base = df[(~df["requested_trial"]) & (df["aware_convert"] == 1)]
+        rows = []
+        for m in ["מגזר יהודי", "מגזר ערבי"]:
+            sub = base[base["migzar"] == m]
+            if len(sub):
+                rate = sub["asked_convert_warning"].eq("כן").mean() * 100
+                rows.append({"מגזר": m, "שיעור שביקשו המרה (%)": rate, "n": len(sub)})
+        if rows:
+            conv_df = pd.DataFrame(rows)
+            fig = px.bar(conv_df, x="מגזר", y="שיעור שביקשו המרה (%)",
+                          color="מגזר",
+                          color_discrete_map=SECTOR_COLORS,
+                          text=[f"{v:.1f}%" for v in conv_df['שיעור שביקשו המרה (%)']])
+            fig.update_traces(textposition="inside", insidetextanchor="middle",
+                              constraintext="inside", cliponaxis=False)
+            for tr in fig.data:
+                tr.textfont = dict(color=_text_on(tr.marker.color))
+            fig.update_layout(showlegend=False, height=400, template="plotly_white",
+                              paper_bgcolor="white", plot_bgcolor="white",
+                              font=dict(color="black"),
+                              margin=dict(l=135, r=40, t=90, b=80),
+                              autosize=False,
+                              title="שיעור בקשות להמרה לאזהרה (בקרב המודעים לאפשרות בלבד)",
+                              title_font_color="black")
+            fig.update_yaxes( ticksuffix="%", range=[0, 80], automargin=True,tickfont=dict(color="black"), title_font=dict(color="black"),title_text="")
+            fig.update_xaxes(automargin=True,tickfont=dict(color="black"), title_font=dict(color="black"),title_text="")
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.plotly_chart(empty_state(), use_container_width=True)
 
-with c2:
-    reasons_pct = {}
-    no_trial_aware = df[(~df["requested_trial"])]
-    for col, label in NO_TRIAL_REASONS.items():
-        if col in no_trial_aware.columns:
-            val = no_trial_aware[col].mean(skipna=True)
-            if pd.notna(val):
-                reasons_pct[label] = val * 100
-    if reasons_pct:
-        s = pd.Series(reasons_pct).sort_values(ascending=True)
-        fig = go.Figure(go.Bar(
-            x=s.values, y=s.index, orientation="h",
-            marker_color=PALETTE["danger"],
-            text=[f"{v:.1f}%" for v in s.values],
-            textposition="inside",
-            constraintext="inside", cliponaxis=False,
-            insidetextanchor="middle", textfont=dict(color="white"),
-        ))
-        fig.update_layout(title="חסמים לבקשת הישפטות / סיבות אי-המרה",
-                          height=400, template="plotly_white",
-                          paper_bgcolor="white", plot_bgcolor="white",
-                          font=dict(color="black"),
-                          margin=dict(l=135, r=40, t=90, b=80),
-                          autosize=False,
-                          title_font=dict(color="black"),
-                          legend=dict(font=dict(color="black")))
-        fig.update_xaxes(ticksuffix="%", title="", automargin=True,
-                          tickfont=dict(color="black"), title_font=dict(color="black"))
-        fig.update_yaxes(title="", automargin=True,
-                          tickfont=dict(color="black"), title_font=dict(color="black"))
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.plotly_chart(empty_state(), use_container_width=True)
+    with c2:
+        reasons_pct = {}
+        no_trial_aware = df[(~df["requested_trial"])]
+        for col, label in NO_TRIAL_REASONS.items():
+            if col in no_trial_aware.columns:
+                val = no_trial_aware[col].mean(skipna=True)
+                if pd.notna(val):
+                    reasons_pct[label] = val * 100
+        if reasons_pct:
+            s = pd.Series(reasons_pct).sort_values(ascending=True)
+            fig = go.Figure(go.Bar(
+                x=s.values, y=s.index, orientation="h",
+                marker_color=PALETTE["danger"],
+                text=[f"{v:.1f}%" for v in s.values],
+                textposition="inside",
+                constraintext="inside", cliponaxis=False,
+                insidetextanchor="middle", textfont=dict(color="white"),
+            ))
+            fig.update_layout(title="חסמים לבקשה להישפט / סיבות לאי-המרה לאזהרה",
+                              height=400, template="plotly_white",
+                              paper_bgcolor="white", plot_bgcolor="white",
+                              font=dict(color="black"),
+                              margin=dict(l=135, r=40, t=90, b=80),
+                              autosize=False,
+                              title_font=dict(color="black"),
+                              legend=dict(font=dict(color="black")))
+            fig.update_xaxes(ticksuffix="%", title="", automargin=True,
+                              tickfont=dict(color="black"), title_font=dict(color="black"))
+            fig.update_yaxes(title="", automargin=True,
+                              tickfont=dict(color="black"), title_font=dict(color="black"))
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.plotly_chart(empty_state(), use_container_width=True)
 
-render_insight("conversion", df)
+with insight_col:
+    render_insight("conversion", df)
 
 
 # =========================================================
@@ -327,52 +338,46 @@ render_insight("conversion", df)
 # =========================================================
 st.markdown("<div class='section-header'>5. תשלום הקנס בפועל</div>", unsafe_allow_html=True)
 
-paid_base = df[~df["requested_trial"]]
-rows = []
-for m in ["מגזר יהודי", "מגזר ערבי"]:
-    sub = paid_base[paid_base["migzar"] == m]
-    if len(sub):
-        rate = sub["paid_fine_actual"].eq("כן").mean() * 100
-        rows.append({"מגזר": m, "% שילמו": rate, "% לא שילמו": 100 - rate, "n": len(sub)})
-if rows:
-    pay_df = pd.DataFrame(rows)
-    fig = go.Figure()
-    fig.add_trace(go.Bar(name="כן — שילמו", x=pay_df["מגזר"], y=pay_df["% שילמו"],
-                          marker_color=YESNO_COLORS["כן"],
-                          text=[f"{v:.1f}%" for v in pay_df["% שילמו"]],
-                          textposition="inside", insidetextanchor="middle",
-                          constraintext="inside", cliponaxis=False,
-                          textfont=dict(color="white", size=14)))
-    fig.add_trace(go.Bar(name="לא — לא שילמו", x=pay_df["מגזר"], y=pay_df["% לא שילמו"],
-                          marker_color=YESNO_COLORS["לא"],
-                          text=[f"{v:.1f}%" for v in pay_df["% לא שילמו"]],
-                          textposition="inside", insidetextanchor="middle",
-                          constraintext="inside", cliponaxis=False,
-                          textfont=dict(color="white", size=14)))
-    fig.update_layout(barmode="stack", template="plotly_white", height=420,
-                      paper_bgcolor="white", plot_bgcolor="white",
-                      font=dict(color="black"),
-                      margin=dict(l=135, r=40, t=90, b=80),
-                      autosize=False,
-                      title=dict(text="שיעור תשלום הקנס בקרב מי שלא ביקשו להישפט",
-                                 font=dict(color="black")),
-                      legend=dict(font=dict(color="black")),
-                      xaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True),
-                      yaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True))
-    fig.update_yaxes(ticksuffix="%", range=[0, 100], automargin=True)
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.plotly_chart(empty_state(), use_container_width=True)
+chart_col, insight_col = st.columns([2, 1.2])
+with chart_col:
+    paid_base = df[~df["requested_trial"]]
+    rows = []
+    for m in ["מגזר יהודי", "מגזר ערבי"]:
+        sub = paid_base[paid_base["migzar"] == m]
+        if len(sub):
+            rate = sub["paid_fine_actual"].eq("כן").mean() * 100
+            rows.append({"מגזר": m, "% שילמו": rate, "% לא שילמו": 100 - rate, "n": len(sub)})
+    if rows:
+        pay_df = pd.DataFrame(rows)
+        fig = go.Figure()
+        fig.add_trace(go.Bar(name="כן — שילמו", x=pay_df["מגזר"], y=pay_df["% שילמו"],
+                              marker_color=YESNO_COLORS["כן"],
+                              text=[f"{v:.1f}%" for v in pay_df["% שילמו"]],
+                              textposition="inside", insidetextanchor="middle",
+                              constraintext="inside", cliponaxis=False,
+                              textfont=dict(color="white", size=14)))
+        fig.add_trace(go.Bar(name="לא — לא שילמו", x=pay_df["מגזר"], y=pay_df["% לא שילמו"],
+                              marker_color=YESNO_COLORS["לא"],
+                              text=[f"{v:.1f}%" for v in pay_df["% לא שילמו"]],
+                              textposition="inside", insidetextanchor="middle",
+                              constraintext="inside", cliponaxis=False,
+                              textfont=dict(color="white", size=14)))
+        fig.update_layout(barmode="stack", template="plotly_white", height=420,
+                          paper_bgcolor="white", plot_bgcolor="white",
+                          font=dict(color="black"),
+                          margin=dict(l=135, r=40, t=90, b=80),
+                          autosize=False,
+                          title=dict(text="שיעור תשלום הקנס בקרב מי שלא ביקשו להישפט",
+                                     font=dict(color="black")),
+                          legend=dict(font=dict(color="black")),
+                          xaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True),
+                          yaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True))
+        fig.update_yaxes(ticksuffix="%", range=[0, 100], automargin=True)
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.plotly_chart(empty_state(), use_container_width=True)
 
-render_insight("fine_payment", df)
+with insight_col:
+    render_insight("fine_payment", df)
 
 
-st.markdown(
-    """
-    <div class='insight-box'>
-      <h4>🧭 סיכום העמוד</h4>
-      <p>חוסר המודעות הוא הסיפור המרכזי כאן. חלקים נרחבים מהאזרחים — במיוחד מי שלא ביקשו להישפט — לא ידעו כלל על קיומן של החלופות, ובכך ההחלטה הראשונית שלהם לא הייתה החלטה מודעת אלא ברירת מחדל. הצורך הנתפס בעורך דין עולה בעיקר בקרב מבקשי ההישפטות, ובמיוחד במגזר הערבי, מה שמרמז שההסתבכות עם המערכת המשפטית מורגשת כאתגר אמיתי שדורש ליווי. בסופו של דבר, מרבית הנהגים שילמו את הקנס, אך הסיבות מגוונות — מתחושת חוסר טעם בהליך ועד חששות בירוקרטיים-כלכליים. הרפורמה צריכה להבליט את החלופות באופן אקטיבי ("מסך חובה" בתהליך הדיגיטלי), ולא להניח שהאזרח יודע על קיומן.</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
