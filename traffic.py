@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 
 import streamlit as st
+
 import base64
 from utils.data_loader import (
     append_excel_bytes,
@@ -24,6 +25,7 @@ def get_img_as_base64(file_path: str) -> str:
     return base64.b64encode(data).decode()
 
 img = get_img_as_base64("static/SurveyIc.png")
+israel_img = get_img_as_base64("assets/Israel_image.jpg")
 
 def _inject_shared_css() -> None:
     """Load the shared assets/styles.css so the sidebar theme applies on the home page too."""
@@ -154,7 +156,59 @@ st.markdown(
           transform: none;
         }}
       }}
+
+      /* State-of-Israel emblem — fixed to the top-left, framed with a soft
+         gold ring that echoes the .home-divider gradient. */
+      .home-emblem {{
+        position: fixed;
+        top: 1.75rem;
+        left: 1.75rem;
+        z-index: 100;
+        width: 96px;
+        height: 96px;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #000336;
+        box-shadow:
+          0 10px 28px rgba(0, 0, 0, 0.45),
+          0 0 0 2px rgba(255, 212, 121, 0.55),
+          0 0 24px rgba(255, 212, 121, 0.20);
+        animation: emblem-enter 1.1s cubic-bezier(.22,.61,.36,1) 0.25s both;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+      }}
+      .home-emblem:hover {{
+        transform: translateY(-2px) scale(1.03);
+        box-shadow:
+          0 14px 34px rgba(0, 0, 0, 0.55),
+          0 0 0 2px rgba(255, 212, 121, 0.85),
+          0 0 32px rgba(255, 212, 121, 0.35);
+      }}
+      .home-emblem img {{
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }}
+      @keyframes emblem-enter {{
+        from {{ opacity: 0; transform: translateY(-18px) scale(0.82); }}
+        to   {{ opacity: 1; transform: translateY(0) scale(1); }}
+      }}
+      @media (max-width: 700px) {{
+        .home-emblem {{ width: 72px; height: 72px; top: 1rem; left: 1rem; }}
+      }}
+      @media (prefers-reduced-motion: reduce) {{
+        .home-emblem {{ animation: none; }}
+      }}
     </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    f"""
+    <div class='home-emblem' title='מדינת ישראל'>
+      <img src='data:image/jpeg;base64,{israel_img}' alt='סמל מדינת ישראל'/>
+    </div>
     """,
     unsafe_allow_html=True,
 )

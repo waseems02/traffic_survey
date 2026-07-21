@@ -35,18 +35,18 @@ html, body, [class*="st-"], .stMarkdown, .stMetric, .stRadio label,
     background: linear-gradient(135deg, #f5f8fc 0%, #ffffff 50%, #f0f5fb 100%) !important;
 }
 
-/* ------- Force sidebar to the LEFT regardless of global RTL ------- */
-/* Streamlit's app shell is a flex container; with direction:rtl it visually
-   flips the sidebar to the right. Pin the shell + sidebar to LTR while
-   restoring RTL on the inner content so Hebrew still flows correctly. */
+/* ------- Pin sidebar to the RIGHT (matches Hebrew reading direction) ------- */
 [data-testid="stAppViewContainer"],
 [data-testid="stApp"] {
     direction: ltr !important;
 }
+[data-testid="stAppViewContainer"] {
+    flex-direction: row-reverse !important;
+}
 [data-testid="stSidebar"] {
     direction: ltr !important;
-    right: auto !important;
-    left: 0 !important;
+    left: auto !important;
+    right: 0 !important;
 }
 [data-testid="stSidebar"] > div,
 [data-testid="stSidebarContent"],
@@ -55,8 +55,8 @@ html, body, [class*="st-"], .stMarkdown, .stMetric, .stRadio label,
     text-align: right !important;
 }
 [data-testid="stSidebarCollapsedControl"] {
-    left: 0.5rem !important;
-    right: auto !important;
+    left: auto !important;
+    right: 0.5rem !important;
 }
 section.main, .main .block-container {
     direction: rtl !important;
