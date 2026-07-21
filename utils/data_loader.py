@@ -259,3 +259,85 @@ def load_default_or_upload(default_path: str = "data.xlsx") -> Optional[pd.DataF
         df = load_clean(default_path, cache_key=cache_key)
 
     return df
+
+
+def _read_raw_excel(source: Union[str, bytes, BytesIO]) -> pd.DataFrame:
+    """Read an Excel source into a raw DataFrame without any cleaning."""
+    if isinstance(source, (bytes, bytearray)):
+        return pd.read_excel(BytesIO(source))
+    if isinstance(source, BytesIO):
+        source.seek(0)
+        return pd.read_excel(source)
+    return pd.read_excel(source)
+
+
+def set_comparison_bytes(new_bytes: bytes, label: Optional[str] = None) -> int:
+    """Store a *second* dataset in session state without touching the main data.
+
+    Used by the year-over-year comparison view: the main dataset stays as the
+    baseline (e.g. 2025 wave), while this holds the second wave (e.g. 2026).
+    Returns the number of raw rows in the uploaded workbook.
+    """
+    raw = _read_raw_excel(new_bytes)
+    st.session_state["comparison_bytes"] = bytes(new_bytes)
+    st.session_state["comparison_label"] = (label or "").strip() or "קובץ להשוואה"
+    st.cache_data.clear()
+    return len(raw)
+
+
+def clear_comparison() -> None:
+    """Drop the second dataset from session state."""
+    st.session_state.pop("comparison_bytes", None)
+    st.session_state.pop("comparison_label", None)
+    st.cache_data.clear()
+
+
+def load_comparison_or_none() -> Optional[pd.DataFrame]:
+    """Return the cleaned comparison DataFrame, or None if none uploaded."""
+    payload = st.session_state.get("comparison_bytes")
+    if not payload:
+        return None
+    cache_key = hashlib.sha1(payload).hexdigest()
+    return load_clean(payload, cache_key=cache_key)
+
+
+def comparison_label() -> str:
+    """Human label for the comparison dataset (falls back to a default)."""
+    return st.session_state.get("comparison_label") or "קובץ להשוואה"
+
+
+def main_label() -> str:
+    """Human label for the primary dataset."""
+    return st.session_state.get("main_label") or "קובץ ראשי"
+
+
+def set_main_label(label: str) -> None:
+    st.session_state["main_label"] = (label or "").strip() or "קובץ ראשי"
+
+
+def append_excel_bytes(
+    new_bytes: bytes,
+    default_path: str = "data.xlsx",
+) -> tuple[bytes, int, int]:
+    """Append rows from `new_bytes` to the currently-active dataset.
+
+    The currently-active source is the previously uploaded bytes (if any),
+    otherwise the on-disk default file. Returns (combined_xlsx_bytes, new_rows,
+    total_rows). Existing data is never modified — only the in-memory/session
+    payload is updated by the caller.
+    """
+    if "uploaded_bytes" in st.session_state and st.session_state["uploaded_bytes"]:
+        existing_df = _read_raw_excel(st.session_state["uploaded_bytes"])
+    elif os.path.exists(default_path):
+        existing_df = _read_raw_excel(default_path)
+    else:
+        existing_df = pd.DataFrame()
+
+    new_df = _read_raw_excel(new_bytes)
+
+    combined = pd.concat([existing_df, new_df], ignore_index=True, sort=False)
+
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        combined.to_excel(writer, index=False)
+    return buf.getvalue(), len(new_df), len(combined)

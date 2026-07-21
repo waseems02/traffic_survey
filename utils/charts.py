@@ -969,6 +969,292 @@ def district_trial_flow(df: pd.DataFrame, district_col: str = "mahoz_short", hei
     return _base_layout(fig, height=height)
 
 
+# ============================================================
+#  Year-over-year comparison helpers (used by the השוואה page)
+# ============================================================
+
+COMPARISON_COLORS = {
+    "main":       PALETTE["primary"],    # dark teal — baseline (e.g. 2025)
+    "comparison": PALETTE["accent"],     # gold — comparison wave (e.g. 2026)
+}
+
+
+def _percent_by_group(df: pd.DataFrame, group_col: str, value_col: str, target_value) -> pd.Series:
+    """Return percent of rows where value_col == target_value, per group."""
+    if df is None or df.empty or group_col not in df or value_col not in df:
+        return pd.Series(dtype=float)
+    work = df[[group_col, value_col]].dropna()
+    if work.empty:
+        return pd.Series(dtype=float)
+    grouped = work.groupby(group_col)[value_col]
+    return grouped.apply(lambda s: (s == target_value).mean() * 100)
+
+
+def _mean_by_group(df: pd.DataFrame, group_col: str, value_col: str) -> pd.Series:
+    if df is None or df.empty or group_col not in df or value_col not in df:
+        return pd.Series(dtype=float)
+    work = df[[group_col, value_col]].dropna()
+    if work.empty:
+        return pd.Series(dtype=float)
+    return work.groupby(group_col)[value_col].mean()
+
+
+def _rate_by_group(df: pd.DataFrame, group_col: str, bool_series: pd.Series) -> pd.Series:
+    """Return percentage of True in `bool_series` per group_col."""
+    if df is None or df.empty or group_col not in df:
+        return pd.Series(dtype=float)
+    work = pd.DataFrame({"_g": df[group_col], "_v": bool_series.astype(float)}).dropna()
+    if work.empty:
+        return pd.Series(dtype=float)
+    return work.groupby("_g")["_v"].mean() * 100
+
+
+def year_comparison_bar(
+    main_df: pd.DataFrame,
+    comp_df: Optional[pd.DataFrame],
+    group_col: str,
+    metric_fn,
+    main_label: str = "2025",
+    comp_label: str = "2026",
+    title: Optional[str] = None,
+    x_suffix: str = "%",
+    height: int = 500,
+    show_delta: bool = True,
+) -> go.Figure:
+    """Horizontal grouped bar comparing the same metric between two datasets.
+
+    Inspired by the Muni100 example: one row per group (e.g. district), two bars
+    stacked side-by-side per row — dark bar = main wave, light bar = comparison
+    wave. `metric_fn(df) -> pd.Series indexed by group_col`.
+    """
+    if main_df is None or main_df.empty:
+        return empty_state()
+
+    s_main = metric_fn(main_df)
+    s_comp = metric_fn(comp_df) if (comp_df is not None and not comp_df.empty) else pd.Series(dtype=float)
+
+    if s_main.empty and s_comp.empty:
+        return empty_state()
+
+    # Preserve display order: sort by main value desc, then append comp-only rows
+    if not s_main.empty:
+        order = s_main.sort_values(ascending=True).index.tolist()  # ascending so biggest ends up on top after reversed axis
+    else:
+        order = s_comp.sort_values(ascending=True).index.tolist()
+    for k in s_comp.index:
+        if k not in order:
+            order.insert(0, k)
+
+    s_main = s_main.reindex(order)
+    s_comp = s_comp.reindex(order) if not s_comp.empty else pd.Series([np.nan] * len(order), index=order)
+
+    fig = go.Figure()
+    main_fill = COMPARISON_COLORS["main"]
+    comp_fill = COMPARISON_COLORS["comparison"]
+
+    # Comparison bar first so it sits above main visually in grouped mode
+    fig.add_trace(go.Bar(
+        y=[str(x) for x in order],
+        x=s_comp.values,
+        orientation="h",
+        name=comp_label,
+        marker_color=comp_fill,
+        marker_line=dict(color=_PALETTE_DARK["accent"], width=1),
+        text=[f"{v:.0f}{x_suffix}" if pd.notna(v) else "" for v in s_comp.values],
+        textposition="inside", insidetextanchor="middle",
+        textfont=dict(color=_text_on(comp_fill), size=13),
+        constraintext="inside", cliponaxis=False,
+        hovertemplate="%{y}<br>" + comp_label + ": %{x:.1f}" + x_suffix + "<extra></extra>",
+    ))
+    fig.add_trace(go.Bar(
+        y=[str(x) for x in order],
+        x=s_main.values,
+        orientation="h",
+        name=main_label,
+        marker_color=main_fill,
+        marker_line=dict(color=_PALETTE_DARK["primary"], width=1),
+        text=[f"{v:.0f}{x_suffix}" if pd.notna(v) else "" for v in s_main.values],
+        textposition="inside", insidetextanchor="middle",
+        textfont=dict(color=_text_on(main_fill), size=13),
+        constraintext="inside", cliponaxis=False,
+        hovertemplate="%{y}<br>" + main_label + ": %{x:.1f}" + x_suffix + "<extra></extra>",
+    ))
+
+    annotations = []
+    if show_delta and not s_comp.dropna().empty:
+        # Show Δ badge to the right of each row
+        max_val = max(
+            [v for v in list(s_main.values) + list(s_comp.values) if pd.notna(v)] or [1]
+        )
+        for grp in order:
+            m = s_main.get(grp, np.nan)
+            c = s_comp.get(grp, np.nan)
+            if pd.isna(m) or pd.isna(c):
+                continue
+            delta = c - m
+            arrow = "▲" if delta > 0 else ("▼" if delta < 0 else "▬")
+            color = "#0e8a4b" if delta > 0 else ("#c93a2c" if delta < 0 else "#6b7a92")
+            annotations.append(dict(
+                x=max_val * 1.02, y=str(grp), xref="x", yref="y",
+                text=f"{arrow} {abs(delta):.1f}{x_suffix}",
+                showarrow=False, xanchor="left",
+                font=dict(size=13, color=color, family="Assistant"),
+                bgcolor="rgba(255,255,255,0.9)",
+                bordercolor="rgba(0,0,0,0.10)", borderwidth=1, borderpad=3,
+            ))
+
+    fig.update_layout(
+        barmode="group",
+        bargap=0.28,
+        bargroupgap=0.08,
+        title=title,
+        annotations=annotations,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    fig.update_xaxes(ticksuffix=x_suffix, title="")
+    fig.update_yaxes(title="", autorange="reversed")
+
+    fig = _base_layout(fig, height=height)
+    fig.update_layout(margin=dict(l=145, r=110, t=90, b=60))
+    return fig
+
+
+# Approximate centroid coordinates for the 7 Israeli police districts.
+_DISTRICT_COORDS: dict[str, tuple[float, float]] = {
+    "צפון":     (32.90, 35.30),
+    "חיפה":     (32.79, 35.00),
+    "מרכז":     (32.08, 34.85),
+    "תל אביב":  (32.09, 34.78),
+    "ירושלים":  (31.78, 35.22),
+    "דרום":     (31.25, 34.79),
+    "יו\"ש":    (31.90, 35.20),
+}
+
+
+def israel_district_map(
+    main_df: pd.DataFrame,
+    comp_df: Optional[pd.DataFrame],
+    metric_fn,
+    main_label: str = "2025",
+    comp_label: str = "2026",
+    x_suffix: str = "%",
+    height: int = 500,
+) -> go.Figure:
+    """Scatter map of Israel with a bubble per district.
+
+    Bubble size = value in the main dataset. Color intensity encodes the delta
+    to the comparison dataset (green = comparison is higher, red = lower).
+    Uses OpenStreetMap tiles so no Mapbox token is required.
+    """
+    if main_df is None or main_df.empty:
+        return empty_state("אין נתונים למפה")
+
+    s_main = metric_fn(main_df)
+    s_comp = metric_fn(comp_df) if (comp_df is not None and not comp_df.empty) else pd.Series(dtype=float)
+
+    lats, lons, texts, sizes, colors, hovers = [], [], [], [], [], []
+    for district, (lat, lon) in _DISTRICT_COORDS.items():
+        m_val = s_main.get(district, np.nan)
+        c_val = s_comp.get(district, np.nan)
+        if pd.isna(m_val) and pd.isna(c_val):
+            continue
+        base = m_val if pd.notna(m_val) else c_val
+        lats.append(lat)
+        lons.append(lon)
+        sizes.append(max(14, min(60, float(base) * 0.9 + 14)))
+        if pd.notna(m_val) and pd.notna(c_val):
+            delta = c_val - m_val
+            if delta > 1:
+                color = "#0e8a4b"
+            elif delta < -1:
+                color = "#c93a2c"
+            else:
+                color = "#6b7a92"
+            texts.append(f"{district}<br>{c_val:.0f}{x_suffix}")
+            hovers.append(
+                f"<b>{district}</b><br>"
+                f"{main_label}: {m_val:.1f}{x_suffix}<br>"
+                f"{comp_label}: {c_val:.1f}{x_suffix}<br>"
+                f"Δ: {delta:+.1f}{x_suffix}"
+            )
+        else:
+            color = PALETTE["primary"]
+            val = m_val if pd.notna(m_val) else c_val
+            texts.append(f"{district}<br>{val:.0f}{x_suffix}")
+            label = main_label if pd.notna(m_val) else comp_label
+            hovers.append(f"<b>{district}</b><br>{label}: {val:.1f}{x_suffix}")
+        colors.append(color)
+
+    fig = go.Figure(go.Scattermapbox(
+        lat=lats, lon=lons,
+        mode="markers+text",
+        marker=dict(size=sizes, color=colors, opacity=0.85),
+        text=texts,
+        textposition="top center",
+        textfont=dict(size=13, color="#0b1b2b", family="Assistant"),
+        hovertemplate="%{customdata}<extra></extra>",
+        customdata=hovers,
+    ))
+    fig.update_layout(
+        mapbox=dict(
+            style="carto-positron",
+            center=dict(lat=31.7, lon=35.0),
+            zoom=6.3,
+        ),
+        margin=dict(l=0, r=0, t=10, b=0),
+        height=height,
+        paper_bgcolor="white",
+        font=dict(family="Assistant, Arial, sans-serif"),
+        showlegend=False,
+    )
+    return fig
+
+
+def comparison_kpi_card(
+    title: str, main_val: float, comp_val: Optional[float],
+    main_label: str = "2025", comp_label: str = "2026",
+    suffix: str = "%", accent: Optional[str] = None,
+) -> str:
+    """HTML KPI card that shows both years side-by-side with delta arrow."""
+    accent = accent or PALETTE["primary"]
+    if main_val is None or (isinstance(main_val, float) and np.isnan(main_val)):
+        main_str = "—"
+    else:
+        main_str = f"{main_val:.1f}{suffix}" if isinstance(main_val, (int, float)) else str(main_val)
+    if comp_val is None or (isinstance(comp_val, float) and np.isnan(comp_val)):
+        comp_str = "—"
+        delta_html = ""
+    else:
+        comp_str = f"{comp_val:.1f}{suffix}" if isinstance(comp_val, (int, float)) else str(comp_val)
+        if main_val is not None and not (isinstance(main_val, float) and np.isnan(main_val)):
+            delta = comp_val - main_val
+            arrow = "▲" if delta > 0 else ("▼" if delta < 0 else "▬")
+            color = "#0e8a4b" if delta > 0 else ("#c93a2c" if delta < 0 else "#6b7a92")
+            delta_html = (
+                f"<div class='cmp-delta' style='color:{color};'>"
+                f"{arrow} {abs(delta):.1f}{suffix}"
+                f"</div>"
+            )
+        else:
+            delta_html = ""
+    return f"""
+    <div class='cmp-kpi-card' style='border-right-color:{accent};'>
+      <div class='cmp-kpi-title'>{title}</div>
+      <div class='cmp-kpi-row'>
+        <div class='cmp-kpi-block'>
+          <span class='cmp-kpi-tag' style='background:{COMPARISON_COLORS['main']}20;color:{COMPARISON_COLORS['main']};'>{main_label}</span>
+          <div class='cmp-kpi-value'>{main_str}</div>
+        </div>
+        <div class='cmp-kpi-block'>
+          <span class='cmp-kpi-tag' style='background:{COMPARISON_COLORS['comparison']}25;color:#8a5a00;'>{comp_label}</span>
+          <div class='cmp-kpi-value'>{comp_str}</div>
+        </div>
+      </div>
+      {delta_html}
+    </div>
+    """
+
+
 def sector_outcomes_stack(df: pd.DataFrame, height: int = 340) -> go.Figure:
     """100%-stacked horizontal rows comparing sector composition of key outcomes.
 

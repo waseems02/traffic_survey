@@ -35,6 +35,33 @@ html, body, [class*="st-"], .stMarkdown, .stMetric, .stRadio label,
     background: linear-gradient(135deg, #f5f8fc 0%, #ffffff 50%, #f0f5fb 100%) !important;
 }
 
+/* ------- Force sidebar to the LEFT regardless of global RTL ------- */
+/* Streamlit's app shell is a flex container; with direction:rtl it visually
+   flips the sidebar to the right. Pin the shell + sidebar to LTR while
+   restoring RTL on the inner content so Hebrew still flows correctly. */
+[data-testid="stAppViewContainer"],
+[data-testid="stApp"] {
+    direction: ltr !important;
+}
+[data-testid="stSidebar"] {
+    direction: ltr !important;
+    right: auto !important;
+    left: 0 !important;
+}
+[data-testid="stSidebar"] > div,
+[data-testid="stSidebarContent"],
+[data-testid="stSidebarUserContent"] {
+    direction: rtl !important;
+    text-align: right !important;
+}
+[data-testid="stSidebarCollapsedControl"] {
+    left: 0.5rem !important;
+    right: auto !important;
+}
+section.main, .main .block-container {
+    direction: rtl !important;
+}
+
 /* Center the main area, give it some breathing room */
 .block-container {
     padding-top: 1.5rem !important;
@@ -206,6 +233,86 @@ html, body, [class*="st-"], .stMarkdown, .stMetric, .stRadio label,
     border-color: #0066cc !important;
 }
 
+/* ------- Vertical-tab style (radio on the left of a chart) ------- */
+.vtab-label {
+    color: #003366;
+    font-weight: 700;
+    font-size: 14px;
+    margin: 4px 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e0e9f5;
+}
+div[data-testid="stRadio"]:has(+ * , *) > label { /* keep parent label hidden */ }
+div[data-testid="stRadio"] > div[role="radiogroup"] {
+    flex-direction: column !important;
+    gap: 4px !important;
+    background: transparent !important;
+    border: none !important;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label {
+    background: #ffffff;
+    border: 1px solid #e0e9f5;
+    border-right: 4px solid transparent;
+    border-radius: 8px;
+    padding: 8px 12px !important;
+    margin: 0 !important;
+    font-weight: 600;
+    color: #000000 !important;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label p {
+    color: #000000 !important;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
+    background: #f0f6ff;
+    color: #000000 !important;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover p {
+    color: #000000 !important;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
+    background: linear-gradient(135deg, #0066cc 0%, #003366 100%);
+    color: #ffffff;
+    border-color: #0066cc;
+    border-right-color: #ffd479;
+    box-shadow: 0 2px 8px rgba(0,51,102,0.18);
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) p {
+    color: #ffffff !important;
+}
+/* Hide the native radio circle so labels look like tab pills */
+div[data-testid="stRadio"] > div[role="radiogroup"] > label > div:first-child {
+    display: none !important;
+}
+
+/* Sidebar radio (e.g. "מסלול") — dark navy theme, blue selected state. */
+[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    border-right: 1px solid rgba(255,255,255,0.10) !important;
+    color: #eaf1f9 !important;
+    box-shadow: none !important;
+}
+[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label p {
+    color: #eaf1f9 !important;
+}
+[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
+    background: rgba(58,139,216,0.14) !important;
+    border-color: rgba(58,139,216,0.35) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
+    background: #3a8bd8 !important;
+    color: #ffffff !important;
+    border-color: #66aaf0 !important;
+}
+[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) p {
+    color: #ffffff !important;
+}
+[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label > div:first-child {
+    display: inline-block !important;
+}
+
 /* ------- Plotly inside Streamlit: make sure RTL doesn't flip axes ------- */
 .js-plotly-plot, .plotly {
     direction: ltr;
@@ -214,7 +321,221 @@ html, body, [class*="st-"], .stMarkdown, .stMetric, .stRadio label,
 /* ------- Misc spacing ------- */
 hr { border-color: #e0e9f5; }
 
-/* ------- Sidebar nav: rename the main "traffic" page to "🏠 בית" ------- */
+/* ============================================================
+   Year-over-year comparison page
+   ============================================================ */
+.cmp-hero {
+    position: relative;
+    background:
+      linear-gradient(135deg, rgba(0,51,102,.86) 0%, rgba(0,102,204,.78) 55%, rgba(25,100,126,.85) 100%),
+      url('app/static/traffic-hero.jpg');
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    padding: 44px 32px 40px;
+    border-radius: 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 14px 40px rgba(0,51,102,0.22);
+    overflow: hidden;
+}
+.cmp-hero__title {
+    font-size: 34px; font-weight: 800; margin: 0 0 6px 0; line-height: 1.15;
+    color: #fff !important;
+}
+.cmp-hero__sub {
+    font-size: 16px; color: #dfe9f7; margin: 0 0 14px 0;
+}
+.cmp-hero__tags { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.cmp-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 999px;
+    font-weight: 700; font-size: 13px; letter-spacing: 0.3px;
+}
+.cmp-tag--main { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+.cmp-tag--comp { background: #FFC857; color: #4a3400; }
+
+.cmp-toolbar {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 14px rgba(0,51,102,0.07);
+    border: 1px solid #e6ecf5;
+}
+
+.cmp-empty {
+    background: linear-gradient(135deg, #fff8e5 0%, #fff2c9 100%);
+    border-right: 6px solid #ffcc00;
+    padding: 26px 28px;
+    border-radius: 14px;
+    color: #6b4a00;
+    line-height: 1.7;
+}
+.cmp-empty h3 { margin: 0 0 8px 0; color: #6b4a00; font-weight: 800; font-size: 20px; }
+.cmp-empty code {
+    background: rgba(255,255,255,0.7);
+    padding: 2px 6px; border-radius: 4px;
+    color: #4a3400;
+}
+
+.cmp-panel {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 14px rgba(0,51,102,0.07);
+    border: 1px solid #e6ecf5;
+    height: 100%;
+}
+.cmp-panel h4 {
+    color: #003366; margin: 0 0 8px 0; font-size: 16px; font-weight: 800;
+    padding-bottom: 8px; border-bottom: 1px solid #e6ecf5;
+}
+.cmp-panel p { color: #37475b; font-size: 14px; line-height: 1.7; margin: 8px 0; }
+.cmp-panel .cmp-panel__list li { margin: 4px 0; color: #37475b; font-size: 14px; }
+
+.cmp-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e6ecf5;
+    border-right: 5px solid #0066cc;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 4px 14px rgba(0,51,102,0.06);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.cmp-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(0,51,102,0.10);
+}
+.cmp-kpi-title {
+    font-size: 13px; color: #6b7a92; font-weight: 700;
+    margin-bottom: 12px; letter-spacing: 0.2px;
+}
+.cmp-kpi-row {
+    display: flex; gap: 18px; align-items: flex-end; flex-wrap: wrap;
+}
+.cmp-kpi-block { flex: 1 1 100px; }
+.cmp-kpi-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 800; margin-bottom: 4px;
+}
+.cmp-kpi-value {
+    font-size: 24px; font-weight: 800; color: #0b1b2b; line-height: 1.1;
+}
+.cmp-delta {
+    display: inline-block; margin-top: 10px;
+    font-weight: 800; font-size: 13px;
+    padding: 4px 10px; border-radius: 8px;
+    background: rgba(0,0,0,0.03);
+}
+
+/* ============================================================
+   Sidebar — dark navy (matches the app's brand blue palette)
+   ============================================================ */
+
+/* Dark bluish background — matches the .page-header / .dashboard-hero gradient */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #061423 0%, #0b1f36 50%, #0b2745 100%) !important;
+    border-left: 1px solid rgba(255,255,255,0.05) !important;
+}
+[data-testid="stSidebar"] > div,
+[data-testid="stSidebarContent"],
+[data-testid="stSidebarUserContent"] {
+    background: transparent !important;
+}
+[data-testid="stSidebar"] * { color: #dbe4f0; }
+
+/* Small section label above button groups (e.g. "פעולות") */
+.sb-section {
+    color: #8fa4c2 !important;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.4px;
+    text-transform: uppercase;
+    margin: 8px 4px 10px 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Sidebar action buttons — dark, blue-accented, no cards */
+[data-testid="stSidebar"] .stButton > button {
+    width: 100%;
+    background: rgba(255,255,255,0.05) !important;
+    color: #eef4fb !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    border-right: 3px solid #3a8bd8 !important;
+    border-radius: 8px !important;
+    padding: 9px 12px !important;
+    font-weight: 600 !important;
+    font-family: 'Assistant', sans-serif !important;
+    font-size: 14px !important;
+    text-align: right !important;
+    letter-spacing: 0.2px !important;
+    box-shadow: none !important;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease !important;
+    margin-bottom: 6px !important;
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(58,139,216,0.18) !important;
+    border-color: rgba(255,255,255,0.20) !important;
+    border-right-color: #66aaf0 !important;
+    transform: translateY(-1px);
+}
+[data-testid="stSidebar"] .stButton > button:active,
+[data-testid="stSidebar"] .stButton > button:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(58,139,216,0.30) !important;
+}
+[data-testid="stSidebar"] .stButton > button p,
+[data-testid="stSidebar"] .stButton > button span {
+    color: #eef4fb !important;
+}
+
+/* Active-comparison badge — subtle blue on dark */
+.sb-badge {
+    display: flex; align-items: center; gap: 8px;
+    margin: 6px 0 8px 0;
+    padding: 9px 12px;
+    background: rgba(58,139,216,0.12);
+    border: 1px solid rgba(58,139,216,0.30);
+    border-right: 3px solid #3a8bd8;
+    border-radius: 8px;
+    color: #cfe0f7 !important;
+    font-size: 12.5px;
+}
+.sb-badge__dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #66aaf0;
+    box-shadow: 0 0 0 3px rgba(102,170,240,0.18);
+    flex: 0 0 auto;
+}
+.sb-badge b { color: #ffffff !important; font-weight: 800; }
+
+/* Sidebar nav — dark with blue hover + active pill */
+[data-testid="stSidebarNav"] ul li a {
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    margin: 2px 0 !important;
+    color: #cfd8e5 !important;
+    font-family: 'Assistant', sans-serif !important;
+    font-weight: 600 !important;
+    border-right: 3px solid transparent !important;
+    transition: background 0.15s ease, color 0.15s ease !important;
+}
+[data-testid="stSidebarNav"] ul li a:hover {
+    background: rgba(58,139,216,0.14) !important;
+    color: #ffffff !important;
+    border-right-color: #3a8bd8 !important;
+}
+[data-testid="stSidebarNav"] ul li a[aria-current="page"] {
+    background: rgba(58,139,216,0.22) !important;
+    color: #ffffff !important;
+    border-right-color: #66aaf0 !important;
+}
+[data-testid="stSidebarNav"] ul li a span,
+[data-testid="stSidebarNav"] ul li a p {
+    color: inherit !important;
+    font-family: 'Assistant', sans-serif !important;
+}
+
+/* Sidebar nav: rename the main "traffic" page to "🏠 בית" */
 [data-testid="stSidebarNav"] ul li:first-child a span {
     font-size: 0 !important;
     line-height: 0 !important;
@@ -225,4 +546,11 @@ hr { border-color: #e0e9f5; }
     line-height: 1.5;
     font-family: 'Assistant', sans-serif;
     direction: rtl;
+}
+
+/* Sidebar collapse arrow — keep it visible on the dark bg */
+[data-testid="stSidebarCollapsedControl"] svg,
+[data-testid="stSidebar"] button[kind="header"] svg {
+    color: #cfd8e5 !important;
+    fill: #cfd8e5 !important;
 }

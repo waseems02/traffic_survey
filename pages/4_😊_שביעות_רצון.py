@@ -229,7 +229,7 @@ with chart_col:
                     for cat, pct in counts.items():
                         if cat in ["אחר, פרט:", "לא יודע"]:
                             continue
-                        rows2.append({"קבוצה": f"{trial_label} — {m}", "המלצה": cat, "אחוז": pct})
+                        rows2.append({"קבוצה": f"{trial_label} <br> {m}", "המלצה": cat, "אחוז": pct})
 
         if rows2:
             rec_df2 = pd.DataFrame(rows2)
@@ -253,7 +253,7 @@ with chart_col:
                                 xaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True),
                                 yaxis=dict(tickfont=dict(color="black"), title_font=dict(color="black"), automargin=True))
             fig2.update_yaxes(ticksuffix="%", title="", automargin=True)
-            fig2.update_xaxes(automargin=True)
+            fig2.update_xaxes(automargin=True, tickangle=0)
             st.plotly_chart(fig2, use_container_width=True)
     else:
         st.plotly_chart(empty_state(), use_container_width=True)

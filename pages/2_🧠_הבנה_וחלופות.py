@@ -235,22 +235,22 @@ with chart_col:
 
 
     work = df.copy()
-    work["group"] = work["trial_label"] + " — " + work["migzar"].fillna("לא ידוע")
-    st.plotly_chart(
-        stacked_pct_bar(
-            work.dropna(subset=["lawyer_consult_bin", "group"]),
-            group_col="group",
-            value_col="lawyer_consult_bin",
-            category_order=["לא חשתי צורך להתייעץ או להיעזר בעורך דין", "חשבתי להתייעץ עם עורך דין", "כן, התייעצתי/נעזרתי בעורך דין"],
-            color_map={
-                "לא חשתי צורך להתייעץ או להיעזר בעורך דין": PALETTE["muted"],
-                "חשבתי להתייעץ עם עורך דין": PALETTE["warn"],
-                "כן, התייעצתי/נעזרתי בעורך דין": PALETTE["secondary"],
-            },
-            title="צורך בליווי עו\"ד — מסלול × מגזר",
-        ),
-        use_container_width=True,
+    work["group"] = work["trial_label"] + " <br> " + work["migzar"].fillna("לא ידוע")
+    fig4 = stacked_pct_bar(
+        work.dropna(subset=["lawyer_consult_bin", "group"]),
+        group_col="group",
+        value_col="lawyer_consult_bin",
+        category_order=["לא חשתי צורך להתייעץ או להיעזר בעורך דין", "חשבתי להתייעץ עם עורך דין", "כן, התייעצתי/נעזרתי בעורך דין"],
+        color_map={
+            "לא חשתי צורך להתייעץ או להיעזר בעורך דין": PALETTE["muted"],
+            "חשבתי להתייעץ עם עורך דין": PALETTE["warn"],
+            "כן, התייעצתי/נעזרתי בעורך דין": PALETTE["secondary"],
+        },
+        title="צורך בליווי עו\"ד — מסלול × מגזר",
     )
+    fig4.update_xaxes(tickangle=0, tickfont=dict(color="black"))
+    fig4.update_layout(xaxis=dict(tickangle=0, tickmode="array"))
+    st.plotly_chart(fig4, use_container_width=True)
 
 with insight_col:
     render_insight("lawyer", df)

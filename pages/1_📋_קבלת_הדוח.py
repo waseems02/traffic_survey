@@ -155,34 +155,36 @@ st.markdown("<div class='section-header'>3. סוגי העבירות שהתקבל
 chart_col, insight_col = st.columns([2, 1.2])
 with chart_col:
     tab_labels = ["כללי", "מגדר", "גיל", "מסלול", "כמות דוחות", "שנת דוח", "אופן קבלה", "מחוז"]
-    tabs = st.tabs(tab_labels)
+    side_col, plot_col = st.columns([1, 4])
+    with side_col:
+        st.markdown("<div class='vtab-label'>פילוח</div>", unsafe_allow_html=True)
+        active_tab = st.radio(
+            "פילוח",
+            options=tab_labels,
+            key="offense_tab",
+            label_visibility="collapsed",
+        )
 
-    with tabs[0]:
-        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות בכללי"), use_container_width=True)
-
-    with tabs[1]:
-        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מגדר", group_col="gender"), use_container_width=True)
-
-    with tabs[2]:
-        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי גיל", group_col="age_band"), use_container_width=True)
-
-    with tabs[3]:
-        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מסלול", group_col="trial_label"), use_container_width=True)
-
-    with tabs[4]:
-        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי כמות דוחות", group_col="report_count_bin"), use_container_width=True)
-
-    with tabs[5]:
-        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי שנת דוח", group_col="report_year_bin"), use_container_width=True)
-
-    with tabs[6]:
-        st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי אופן קבלה", group_col="report_channel_bin"), use_container_width=True)
-
-    with tabs[7]:
-        if "mahoz_short" in df.columns:
-            st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מחוז", group_col="mahoz_short", height=560), use_container_width=True)
-        else:
-            st.info("נתוני המחוזות לא זמינים")
+    with plot_col:
+        if active_tab == "כללי":
+            st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות בכללי"), use_container_width=True)
+        elif active_tab == "מגדר":
+            st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מגדר", group_col="gender"), use_container_width=True)
+        elif active_tab == "גיל":
+            st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי גיל", group_col="age_band"), use_container_width=True)
+        elif active_tab == "מסלול":
+            st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מסלול", group_col="trial_label"), use_container_width=True)
+        elif active_tab == "כמות דוחות":
+            st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי כמות דוחות", group_col="report_count_bin"), use_container_width=True)
+        elif active_tab == "שנת דוח":
+            st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי שנת דוח", group_col="report_year_bin"), use_container_width=True)
+        elif active_tab == "אופן קבלה":
+            st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי אופן קבלה", group_col="report_channel_bin"), use_container_width=True)
+        elif active_tab == "מחוז":
+            if "mahoz_short" in df.columns:
+                st.plotly_chart(horizontal_pct_bar(df, OFFENSE_COLS, title="סוגי העבירות לפי מחוז", group_col="mahoz_short", height=560), use_container_width=True)
+            else:
+                st.info("נתוני המחוזות לא זמינים")
 
 with insight_col:
     render_insight("offense_type", df)
