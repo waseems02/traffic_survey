@@ -99,7 +99,7 @@ SECTIONS: list[dict] = [
         "loader": load_top_offenses,
         "chart": {
             "type": "horizontal_bar", "x": "סמל עבירה", "y": "total",
-            "wrap_y_labels": True, "wrap_len": 26, "height": 640,
+            "wrap_y_labels": True, "wrap_len": 38, "height": 820,
         },
     },
     {
