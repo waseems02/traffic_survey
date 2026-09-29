@@ -4,12 +4,6 @@ __pycache__/
 *.pyo
 .Python
 
-# External / raw data files — kept locally, not committed
-דוחות במ ובקשות להישפט 2019-2021.xlsx
-דוחות במ ובקשות להישפט 2022-2024.xlsx
-דוחות לפי בימש משטרה 19.8.2025.xlsx
-נתוני בסיס מהבה.xlsx
-
 # OS
 .DS_Store
 Thumbs.db
