@@ -99,7 +99,8 @@ SECTIONS: list[dict] = [
         "loader": load_top_offenses,
         "chart": {
             "type": "horizontal_bar", "x": "סמל עבירה", "y": "total",
-            "wrap_y_labels": True, "wrap_len": 38, "height": 1000,
+            "wrap_y_labels": True, "wrap_len": 22, "height": 820,
+            "tick_font_size": 11, "left_margin": 260,
         },
     },
     {
@@ -265,7 +266,9 @@ def _build_chart(df, spec: dict, title: str):
             text_auto=".2s" if work[y].max() >= 1000 else True,
         )
         fig.update_traces(textposition="outside", cliponaxis=False)
-        fig.update_yaxes(title="")
+        fig.update_yaxes(title="", tickfont=dict(size=spec.get("tick_font_size", 14), color="black"))
+        if spec.get("left_margin"):
+            fig.update_layout(margin=dict(l=spec["left_margin"], r=40, t=90, b=80))
         if y_suffix:
             fig.update_xaxes(ticksuffix=y_suffix)
 
