@@ -358,7 +358,7 @@ st.markdown(
       <p class='home-meta anim d3'>אפריל 2026</p>
       <p class='home-meta anim d4'>שלומית כהן · וסים סעדי</p>
       <p class='home-meta anim d5'>תכנון מדיניות ואסטרטגיה, משרד המשפטים</p>
-      <p class='home-hint anim d6'>👈 בחר עמוד מהתפריט הצדדי כדי להתחיל</p>
+      <p class='home-hint anim d6'>👉 בחר עמוד מהתפריט הצדדי כדי להתחיל</p>
     </div>
     """,
     unsafe_allow_html=True,

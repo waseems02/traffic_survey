@@ -99,9 +99,6 @@ if comp_df is None:
         """,
         unsafe_allow_html=True,
     )
-    # Still show the main dataset alone so the layout is not empty
-    st.markdown("<div class='section-header'>תצוגה מוקדמת של הקובץ הראשי</div>", unsafe_allow_html=True)
-    st.dataframe(main_df.head(25), use_container_width=True)
     st.stop()
 
 

@@ -237,24 +237,37 @@ st.markdown("<div class='section-header'>3. האם התקיים דיון בפו�
 _hearing = df.dropna(subset=["migzar"]).copy()
 _hearing["hearing_held"] = _hearing["hearing_held"].fillna("אין מענה")
 
-st.plotly_chart(
-    stacked_pct_bar(
-        _hearing,
-        group_col="migzar",
-        value_col="hearing_held",
-        category_order=[
-            "כן, בנוכחותי",
-            "כן, אבל לא בנוכחותי (עו\"ד ייצג אותי)",
-            "כן, אבל לא התייצבתי (לא ידעתי על תאריך הדיון או בחרתי לא להתייצב)",
-            "טרם נקבע דיון",
-            "לא נקבע דיון וההליך התבטל",
-            "אין מענה",
-        ],
-        color_map=HEARING_STATUS_COLORS,
-        title="האם התקיים דיון בפועל לפי מגזר",
-    ),
-    use_container_width=True,
+_hearing_fig = stacked_pct_bar(
+    _hearing,
+    group_col="migzar",
+    value_col="hearing_held",
+    category_order=[
+        "כן, בנוכחותי",
+        "כן, אבל לא בנוכחותי (עו\"ד ייצג אותי)",
+        "כן, אבל לא התייצבתי (לא ידעתי על תאריך הדיון או בחרתי לא להתייצב)",
+        "טרם נקבע דיון",
+        "לא נקבע דיון וההליך התבטל",
+        "אין מענה",
+    ],
+    color_map=HEARING_STATUS_COLORS,
+    title="האם התקיים דיון בפועל לפי מגזר",
 )
+# Keep the horizontal legend above the chart, but give it enough top margin
+# and a small font so 6 long Hebrew labels wrap onto multiple rows without
+# spilling into the plot area.
+_hearing_fig.update_layout(
+    legend=dict(
+        orientation="h",
+        yanchor="bottom", y=1.04,
+        xanchor="right", x=1.0,
+        font=dict(size=11, color="black"),
+        bgcolor="rgba(0,0,0,0)",
+        traceorder="normal",
+    ),
+    margin=dict(l=135, r=40, t=150, b=80),
+    height=580,
+)
+st.plotly_chart(_hearing_fig, use_container_width=True)
 
 # =========================================================
 # 4. ייצוג ע"י עורך דין בדיון (only those who attended a hearing)

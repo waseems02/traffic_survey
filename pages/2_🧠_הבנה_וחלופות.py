@@ -137,6 +137,7 @@ for col, label, container in [
             show_mean=True,
             title=label,
         )
+        fig.update_xaxes(tickangle=0)
         st.plotly_chart(fig, use_container_width=True)
 
 
